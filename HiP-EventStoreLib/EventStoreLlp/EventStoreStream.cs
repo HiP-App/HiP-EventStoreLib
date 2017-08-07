@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using System.Linq;
 using System.Threading;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
@@ -88,6 +90,39 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             {
                 _sema.Release();
             }
+        }
+
+        public EventStreamTransaction BeginTransaction()
+        {
+            return new EventStreamTransaction(this);
+        }
+
+        public async Task<(T value, bool isSuccessful)> TryGetMetadataAsync<T>(string key)
+        {
+            var meta = await _connection.UnderlyingConnection.GetStreamMetadataAsync(Name);
+            return meta.StreamMetadata.TryGetValue<T>(key, out var value)
+                ? (value, true)
+                : (default(T), false);
+        }
+
+        public async Task SetMetadataAsync(string key, object value)
+        {
+            var meta = await _connection.UnderlyingConnection.GetStreamMetadataAsync(Name);
+            var newMeta = meta.StreamMetadata.Copy();
+
+            switch (value)
+            {
+                case float v: newMeta.SetCustomProperty(key, v); break;
+                case long v: newMeta.SetCustomProperty(key, v); break;
+                case bool v: newMeta.SetCustomProperty(key, v); break;
+                case decimal v: newMeta.SetCustomProperty(key, v); break;
+                case double v: newMeta.SetCustomProperty(key, v); break;
+                case int v: newMeta.SetCustomProperty(key, v); break;
+                case string v: newMeta.SetCustomProperty(key, v); break;
+                default: throw new ArgumentException($"Values of type '{value.GetType().Name}' are not supported");
+            }
+
+            await _connection.UnderlyingConnection.SetStreamMetadataAsync(Name, ExpectedVersion.Any, newMeta);
         }
     }
 }

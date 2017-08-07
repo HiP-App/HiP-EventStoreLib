@@ -20,6 +20,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         Task AppendAsync(IEvent ev);
         Task AppendManyAsync(IEnumerable<IEvent> events);
         Task DeleteAsync();
+        EventStreamTransaction BeginTransaction();
+        Task<(T value, bool isSuccessful)> TryGetMetadataAsync<T>(string key);
+        Task SetMetadataAsync(string key, object value);
         IAsyncEnumerator<IEvent> GetEnumerator();
     }
 

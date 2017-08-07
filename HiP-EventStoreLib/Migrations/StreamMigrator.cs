@@ -46,10 +46,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
 
         private static async Task<int?> GetStreamVersionAsync(IEventStream stream)
         {
-            var metadata = await stream.GetMetadataAsync();
-            return metadata.StreamMetadata.TryGetValue(StreamVersionMetadataKey, out int version)
-                ? version
-                : default(int?);
+            var metadata = await stream.TryGetMetadataAsync<int>(StreamVersionMetadataKey);
+            return metadata.isSuccessful ? metadata.value : default(int?);
         }
 
         private static IEnumerable<MigrationTypeInfo> GetAvailableMigrations()
@@ -73,7 +71,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
             var args = new StreamMigrationArgs(stream);
             await migration.MigrateAsync(args);
 
-            using (var transaction = await stream.StartTransactionAsync())
+            using (var transaction = stream.BeginTransaction())
             {
                 // Soft-delete the stream and recreate it by appending all new events
                 await stream.DeleteAsync();
@@ -81,10 +79,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
                 await newStream.AppendManyAsync(args.EventsToAppend);
 
                 // Write new version to the stream's metadata
-                var metadata = await newStream.GetMetadataAsync();
-                var updatedMetadata = metadata.StreamMetadata.Copy()
-                    .SetCustomProperty(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
-                await newStream.SetMetadataAsync(updatedMetadata);
+                await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
 
                 await transaction.CommitAsync();
             }
