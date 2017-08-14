@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
-    public class EventStoreConnection : IEventStore, IEventStreamCollection
+    public class EventStore : IEventStore, IEventStreamCollection
     {
         private readonly Dictionary<string, IEventStream> _streamWrappers = new Dictionary<string, IEventStream>();
         private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
@@ -14,7 +14,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         public IEventStreamCollection Streams { get; }
 
-        public EventStoreConnection(IEventStoreConnection underlyingConnection)
+        /// <summary>
+        /// Initializes an <see cref="EventStore"/> from an already connected <see cref="IEventStoreConnection"/>.
+        /// </summary>
+        /// <param name="underlyingConnection"></param>
+        public EventStore(IEventStoreConnection underlyingConnection)
         {
             UnderlyingConnection = underlyingConnection;
         }

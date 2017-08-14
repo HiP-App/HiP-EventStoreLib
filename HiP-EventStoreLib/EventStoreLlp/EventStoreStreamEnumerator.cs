@@ -9,7 +9,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
     /// <summary>
     /// Provides an easy-to-consume async enumerator to iterate over all events in an Event Store stream.
     /// </summary>
-    public class EventStoreStreamEnumerator : IAsyncEnumerator<IEvent>
+    public class EventStoreStreamEnumerator : IEventStreamEnumerator
     {
         private const int PageSize = 4096; // only 4096 events can be retrieved in one call
 
@@ -22,7 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         public IEvent Current => _buffer.Peek();
 
-        public event EventHandler<EventParsingException> EventParsingFailed;
+        public event EventHandler<EventParsingFailedArgs> EventParsingFailed;
 
         public EventStoreStreamEnumerator(IEventStoreConnection connection, string streamName)
         {
@@ -59,7 +59,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                     }
                     catch (ArgumentException e)
                     {
-                        EventParsingFailed?.Invoke(this, new EventParsingException(eventData, e));
+                        EventParsingFailed?.Invoke(this, new EventParsingFailedArgs(eventData, e));
                     }
                 }
 
@@ -75,21 +75,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             _startPosition = 0;
             _isEndOfStream = false;
             _buffer.Clear();
-        }
-    }
-
-    /// <summary>
-    /// The exception that is thrown when raw event data cannot be deserialized into a corresponding CLR object.
-    /// </summary>
-    public class EventParsingException : Exception
-    {
-        public ResolvedEvent RawEvent { get; }
-
-        public EventParsingException(ResolvedEvent rawEvent, Exception innerException)
-            : base($"The event data of type '{rawEvent.Event.EventType}' could not be deserialized into " +
-                   $"an instance of '{nameof(IEvent)}'", innerException)
-        {
-            RawEvent = rawEvent;
         }
     }
 }
