@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <summary>
         /// Gets the first <see cref="IDomainIndex"/> of the specified type.
         /// </summary>
-        public IDomainIndex Index<T>() where T : IDomainIndex => Indices.OfType<T>().FirstOrDefault();
+        public T Index<T>() where T : IDomainIndex => Indices.OfType<T>().FirstOrDefault();
 
         public void ApplyEvent(IEvent ev)
         {
