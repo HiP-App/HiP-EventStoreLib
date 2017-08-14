@@ -5,8 +5,8 @@ using EventStore.ClientAPI;
 using System.Linq;
 using System.Threading;
 using System.Reactive.Subjects;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System.Reactive.Linq;
+using System.Reactive.Disposables;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
@@ -14,34 +14,23 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
     {
         private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
         private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
-        private EventStore _connection;
+        private readonly EventStore _eventStore;
         private bool _isDeleted;
 
         public IObservable<(IEventStream sender, IEvent ev)> Appended => _appended;
 
         public string Name { get; }
 
-        public EventStoreStream(EventStore connection, string name)
+        public EventStoreStream(EventStore eventStore, string name)
         {
-            _connection = connection;
+            _eventStore = eventStore;
             Name = name;
         }
 
         public IEventStreamEnumerator GetEnumerator()
         {
-            _sema.Wait();
-
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            try
-            {
-                return new EventStoreStreamEnumerator(_connection.UnderlyingConnection, Name);
-            }
-            finally
-            {
-                _sema.Release();
-            }
+            using (BeginCriticalSectionAsync().Result)
+                return new EventStoreStreamEnumerator(_eventStore.UnderlyingConnection, Name);
         }
 
         public async Task AppendAsync(IEvent ev) =>
@@ -52,129 +41,108 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             if (events == null)
                 throw new ArgumentNullException(nameof(events));
 
-            await _sema.WaitAsync();
-
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            try
-            {
-                var eventsList = events.ToList();
-
-                // persist events in Event Store
-                var eventData = eventsList.Select(ev => ev.ToEventData(Guid.NewGuid()));
-                var result = await _connection.UnderlyingConnection.AppendToStreamAsync(Name, ExpectedVersion.Any, eventData);
-
-                // forward events to indices so they can update their state
-                foreach (var ev in eventsList)
-                    _appended.OnNext((this, ev));
-            }
-            finally
-            {
-                _sema.Release();
-            }
+            using (await BeginCriticalSectionAsync())
+                await AppendEventsCore(events);
         }
 
         public async Task DeleteAsync()
         {
-            await _sema.WaitAsync();
-
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            try
+            using (await BeginCriticalSectionAsync())
             {
                 _isDeleted = true;
                 _appended.OnCompleted();
                 _appended.Dispose();
-                await _connection.DeleteStreamAsync(Name);
-            }
-            finally
-            {
-                _sema.Release();
+                await _eventStore.DeleteStreamAsync(Name);
             }
         }
 
         public EventStreamTransaction BeginTransaction()
         {
-            return new EventStreamTransaction(this);
+            if (_isDeleted)
+                throw new StreamDeletedException();
+
+            _sema.Wait();
+
+            try
+            {
+                var transaction = new EventStreamTransaction(this);
+
+                transaction.WhenCompleted.ContinueWith(async task =>
+                {
+                    await AppendEventsCore(task.Result);
+                    _sema.Release();
+                });
+
+                return transaction;
+            }
+            finally
+            {
+                _sema.Release();
+            }
         }
 
         public async Task<(T value, bool isSuccessful)> TryGetMetadataAsync<T>(string key)
         {
-            var meta = await _connection.UnderlyingConnection.GetStreamMetadataAsync(Name);
-            return meta.StreamMetadata.TryGetValue<T>(key, out var value)
-                ? (value, true)
-                : (default(T), false);
+            using (await BeginCriticalSectionAsync())
+            {
+                var meta = await _eventStore.UnderlyingConnection.GetStreamMetadataAsync(Name);
+                return meta.StreamMetadata.TryGetValue<T>(key, out var value)
+                    ? (value, true)
+                    : (default(T), false);
+            }
         }
 
         public async Task SetMetadataAsync(string key, object value)
         {
-            var meta = await _connection.UnderlyingConnection.GetStreamMetadataAsync(Name);
-            var newMeta = meta.StreamMetadata.Copy();
-
-            switch (value)
+            using (await BeginCriticalSectionAsync())
             {
-                case float v: newMeta.SetCustomProperty(key, v); break;
-                case long v: newMeta.SetCustomProperty(key, v); break;
-                case bool v: newMeta.SetCustomProperty(key, v); break;
-                case decimal v: newMeta.SetCustomProperty(key, v); break;
-                case double v: newMeta.SetCustomProperty(key, v); break;
-                case int v: newMeta.SetCustomProperty(key, v); break;
-                case string v: newMeta.SetCustomProperty(key, v); break;
-                default: throw new ArgumentException($"Values of type '{value.GetType().Name}' are not supported");
-            }
+                var meta = await _eventStore.UnderlyingConnection.GetStreamMetadataAsync(Name);
+                var newMeta = meta.StreamMetadata.Copy();
 
-            await _connection.UnderlyingConnection.SetStreamMetadataAsync(Name, ExpectedVersion.Any, newMeta);
+                switch (value)
+                {
+                    case float v: newMeta.SetCustomProperty(key, v); break;
+                    case long v: newMeta.SetCustomProperty(key, v); break;
+                    case bool v: newMeta.SetCustomProperty(key, v); break;
+                    case decimal v: newMeta.SetCustomProperty(key, v); break;
+                    case double v: newMeta.SetCustomProperty(key, v); break;
+                    case int v: newMeta.SetCustomProperty(key, v); break;
+                    case string v: newMeta.SetCustomProperty(key, v); break;
+                    default: throw new ArgumentException($"Values of type '{value.GetType().Name}' are not supported");
+                }
+
+                await _eventStore.UnderlyingConnection.SetStreamMetadataAsync(Name, ExpectedVersion.Any, newMeta);
+            }
         }
 
         public IEventStreamSubscription SubscribeCatchUp()
         {
-            return new EventStoreStreamCatchUpSubscription(_connection.UnderlyingConnection, Name);
-        }
-    }
+            if (_isDeleted)
+                throw new StreamDeletedException();
 
-    public class EventStoreStreamCatchUpSubscription : IEventStreamSubscription
-    {
-        private readonly ReplaySubject<IEvent> _eventAppeared = new ReplaySubject<IEvent>();
-        private readonly EventStoreCatchUpSubscription _subscription;
-
-        public IObservable<IEvent> EventAppeared => _eventAppeared;
-
-        public event EventHandler<EventParsingFailedArgs> EventParsingFailed;
-
-        public EventStoreStreamCatchUpSubscription(IEventStoreConnection connection, string streamName)
-        {
-            _subscription = connection.SubscribeToStreamFrom(
-                streamName,
-                null, // don't use StreamPosition.Start (see https://groups.google.com/forum/#!topic/event-store/8tpXJMNEMqI),
-                CatchUpSubscriptionSettings.Default,
-                OnEventAppeared);
+            return new EventStoreStreamCatchUpSubscription(_eventStore.UnderlyingConnection, Name);
         }
 
-        private void OnEventAppeared(EventStoreCatchUpSubscription _, ResolvedEvent resolvedEvent)
+        private async Task AppendEventsCore(IEnumerable<IEvent> events)
         {
-            try
-            {
-                // Note regarding migration:
-                // Event types may change over time (properties get added/removed etc.)
-                // Whenever an event has multiple versions, an event of an obsolete type should be transformed to an event
-                // of the latest version, so that ApplyEvent(...) only has to deal with events of the current version.
+            var eventsList = events.ToList();
 
-                var ev = resolvedEvent.Event.ToIEvent().MigrateToLatestVersion();
-                _eventAppeared.OnNext(ev);
-            }
-            catch (Exception e)
-            {
-                EventParsingFailed?.Invoke(this, new EventParsingFailedArgs(resolvedEvent, e));
-            }
+            // persist events in Event Store
+            var eventData = eventsList.Select(ev => ev.ToEventData(Guid.NewGuid()));
+            var result = await _eventStore.UnderlyingConnection.AppendToStreamAsync(Name, ExpectedVersion.Any, eventData);
+
+            // forward events to indices so they can update their state
+            foreach (var ev in eventsList)
+                _appended.OnNext((this, ev));
         }
-
-        public void Dispose()
+        
+        private async Task<IDisposable> BeginCriticalSectionAsync()
         {
-            _subscription.Stop();
-            _eventAppeared.OnCompleted();
-            _eventAppeared.Dispose();
+            if (_isDeleted)
+                throw new StreamDeletedException();
+
+            await _sema.WaitAsync();
+            return Disposable.Create(() => _sema.Release());
         }
     }
 }

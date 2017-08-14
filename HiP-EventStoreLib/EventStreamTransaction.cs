@@ -11,8 +11,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     {
         private readonly IEventStream _stream;
         private readonly List<IEvent> _events = new List<IEvent>();
+        private readonly TaskCompletionSource<IReadOnlyList<IEvent>> _completion = new TaskCompletionSource<IReadOnlyList<IEvent>>();
         private bool _isCommitted;
         private bool _isDisposed;
+
+        /// <summary>
+        /// A task that finishes when the transaction is committed or disposed.
+        /// </summary>
+        public Task<IReadOnlyList<IEvent>> WhenCompleted => _completion.Task;
 
         public EventStreamTransaction(IEventStream stream)
         {
@@ -35,11 +41,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// Persists all events added to this transaction in the event stream.
         /// </summary>
         /// <returns></returns>
-        public async Task CommitAsync()
+        public void Commit()
         {
             VerifyState();
             _isCommitted = true;
-            await _stream.AppendManyAsync(_events);
+            _completion.SetResult(_events);
         }
 
         private void VerifyState()
@@ -51,6 +57,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 throw new InvalidOperationException("A commit has already been executed");
         }
 
-        public void Dispose() => _isDisposed = true;
+        public void Dispose()
+        {
+            _isDisposed = true;
+
+            if (!_isCommitted)
+                _completion.SetResult(new List<IEvent>());
+        }
     }
 }
