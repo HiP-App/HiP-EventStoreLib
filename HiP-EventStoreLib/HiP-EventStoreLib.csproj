@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.4</TargetFramework>
     <RootNamespace>PaderbornUniversity.SILab.Hip.EventSourcing</RootNamespace>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>HiP Devs</Authors>
     <Description>Provides core functionality for implementing the event sourcing &amp; CQRS patterns.</Description>
     <Copyright></Copyright>
