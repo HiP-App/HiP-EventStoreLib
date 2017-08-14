@@ -12,11 +12,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
     public class EventStoreStream : IEventStream
     {
+        private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
         private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
         private EventStore _connection;
         private bool _isDeleted;
 
-        public event EventAppendedEventHandler Appended;
+        public IObservable<(IEventStream sender, IEvent ev)> Appended => _appended;
 
         public string Name { get; }
 
@@ -66,7 +67,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
                 // forward events to indices so they can update their state
                 foreach (var ev in eventsList)
-                    Appended?.Invoke(this, ev);
+                    _appended.OnNext((this, ev));
             }
             finally
             {
@@ -84,7 +85,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             try
             {
                 _isDeleted = true;
-                Appended = null;
+                _appended.OnCompleted();
+                _appended.Dispose();
                 await _connection.DeleteStreamAsync(Name);
             }
             finally
@@ -172,6 +174,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
         {
             _subscription.Stop();
             _eventAppeared.OnCompleted();
+            _eventAppeared.Dispose();
         }
     }
 }

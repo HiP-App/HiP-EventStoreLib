@@ -2,6 +2,7 @@
 using EventStore.ClientAPI;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {

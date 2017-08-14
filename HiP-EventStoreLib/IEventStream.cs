@@ -6,7 +6,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public interface IEventStream
     {
-        event EventAppendedEventHandler Appended;
+        IObservable<(IEventStream sender, IEvent ev)> Appended { get; }
         string Name { get; }
         Task AppendAsync(IEvent ev);
         Task AppendManyAsync(IEnumerable<IEvent> events);
