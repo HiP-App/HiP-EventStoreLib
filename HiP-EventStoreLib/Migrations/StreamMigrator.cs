@@ -81,7 +81,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
                 // Write new version to the stream's metadata
                 await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
 
-                await transaction.CommitAsync();
+                transaction.Commit();
             }
         }
 

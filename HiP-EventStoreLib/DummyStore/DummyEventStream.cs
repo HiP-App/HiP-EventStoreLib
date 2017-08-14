@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
 using System.Reactive.Subjects;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
@@ -11,7 +10,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
     public class DummyEventStream : IEventStream
     {
         private readonly DummyEventStore _eventStore;
-        private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
+        private readonly AsyncLock _mutex = new AsyncLock();
         private readonly List<IEvent> _events = new List<IEvent>();
         private readonly Dictionary<string, object> _metadata = new Dictionary<string, object>();
         private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
@@ -41,10 +40,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
         public EventStreamTransaction BeginTransaction()
         {
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            _sema.Wait();
+            var lockToken = BeginCriticalSectionAsync().Result;
 
             try
             {
@@ -53,14 +49,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
                 transaction.WhenCompleted.ContinueWith(task =>
                 {
                     AppendEventsCore(task.Result);
-                    _sema.Release();
+                    lockToken.Dispose();
                 });
 
                 return transaction;
             }
             finally
             {
-                _sema.Release();
+                lockToken.Dispose();
             }
         }
 
@@ -112,11 +108,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
         private async Task<IDisposable> BeginCriticalSectionAsync()
         {
+            var lockToken = await _mutex.LockAsync();
+
             if (_isDeleted)
                 throw new StreamDeletedException();
 
-            await _sema.WaitAsync();
-            return Disposable.Create(() => _sema.Release());
+            return lockToken;
         }
     }
 }

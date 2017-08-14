@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using EventStore.ClientAPI;
 using System.Threading.Tasks;
-using System.Threading;
+using Nito.AsyncEx;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
     public class EventStore : IEventStore, IEventStreamCollection
     {
         private readonly Dictionary<string, IEventStream> _streamWrappers = new Dictionary<string, IEventStream>();
-        private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
+        private readonly AsyncLock _mutex = new AsyncLock();
 
         internal IEventStoreConnection UnderlyingConnection { get; }
 
@@ -25,16 +25,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         internal async Task DeleteStreamAsync(string name)
         {
-            await _sema.WaitAsync();
-
-            try
+            using (await _mutex.LockAsync())
             {
                 await UnderlyingConnection.DeleteStreamAsync(name, ExpectedVersion.Any);
                 _streamWrappers.Remove(name);
-            }
-            finally
-            {
-                _sema.Release();
             }
         }
 
@@ -42,9 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
         {
             get
             {
-                _sema.Wait();
-
-                try
+                using (_mutex.Lock())
                 {
                     if (_streamWrappers.TryGetValue(name, out var existingStreamWrapper))
                         return existingStreamWrapper;
@@ -52,10 +44,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                     var streamWrapper = new EventStoreStream(this, name);
                     _streamWrappers[name] = streamWrapper;
                     return streamWrapper;
-                }
-                finally
-                {
-                    _sema.Release();
                 }
             }
         }

@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using System.Linq;
-using System.Threading;
 using System.Reactive.Subjects;
 using System.Reactive.Linq;
 using System.Reactive.Disposables;
+using Nito.AsyncEx;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
     public class EventStoreStream : IEventStream
     {
         private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
-        private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
+        private readonly AsyncLock _mutex = new AsyncLock();
         private readonly EventStore _eventStore;
         private bool _isDeleted;
 
@@ -58,10 +58,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         public EventStreamTransaction BeginTransaction()
         {
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            _sema.Wait();
+            var lockToken = BeginCriticalSectionAsync().Result;
 
             try
             {
@@ -70,14 +67,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 transaction.WhenCompleted.ContinueWith(async task =>
                 {
                     await AppendEventsCore(task.Result);
-                    _sema.Release();
+                    lockToken.Dispose();
                 });
 
                 return transaction;
             }
             finally
             {
-                _sema.Release();
+                lockToken.Dispose();
             }
         }
 
@@ -117,10 +114,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         public IEventStreamSubscription SubscribeCatchUp()
         {
-            if (_isDeleted)
-                throw new StreamDeletedException();
-
-            return new EventStoreStreamCatchUpSubscription(_eventStore.UnderlyingConnection, Name);
+            using (BeginCriticalSectionAsync().Result)
+                return new EventStoreStreamCatchUpSubscription(_eventStore.UnderlyingConnection, Name);
         }
 
         private async Task AppendEventsCore(IEnumerable<IEvent> events)
@@ -135,14 +130,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             foreach (var ev in eventsList)
                 _appended.OnNext((this, ev));
         }
-        
+
         private async Task<IDisposable> BeginCriticalSectionAsync()
         {
+            var lockToken = await _mutex.LockAsync();
+
             if (_isDeleted)
                 throw new StreamDeletedException();
 
-            await _sema.WaitAsync();
-            return Disposable.Create(() => _sema.Release());
+            return lockToken;
         }
     }
 }
