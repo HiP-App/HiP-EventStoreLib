@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <!-- $-tokens refer to values in the *.csproj-file (see also: https://docs.microsoft.com/en-us/nuget/schema/nuspec#replacement-tokens) -->
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/HiP-App/HiP-EventStoreLib/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/HiP-App/HiP-EventStoreLib</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2017</copyright>
+    <tags>es cqrs eventsourcing event sourcing hip</tags>
+  </metadata>
+</package>

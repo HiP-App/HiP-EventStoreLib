@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,8 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public class InMemoryCache
     {
-        // When switching to .NET Standard 2.0, we can use ILogger<> from package "Microsoft.Extensions.Logging.Abstractions"
-        //private readonly ILogger<EventStoreClient> _logger;
+        private readonly ILogger<InMemoryCache> _logger;
 
         public IReadOnlyCollection<IDomainIndex> Indices { get; }
 
@@ -36,8 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine($"Failed to populate index of type '{index.GetType().Name}' with event of type '{ev.GetType().Name}': {e}");
-                    //_logger.LogWarning($"Failed to populate index of type '{index.GetType().Name}' with event of type '{events.Current.GetType().Name}': {e}");
+                    _logger.LogWarning($"Failed to populate index of type '{index.GetType().Name}' with event of type '{ev.GetType().Name}': {e}");
                 }
             }
         }
