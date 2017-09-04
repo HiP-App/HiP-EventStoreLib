@@ -5,7 +5,6 @@ using EventStore.ClientAPI;
 using System.Linq;
 using System.Reactive.Subjects;
 using System.Reactive.Linq;
-using System.Reactive.Disposables;
 using Nito.AsyncEx;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
