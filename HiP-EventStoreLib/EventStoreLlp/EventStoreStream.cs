@@ -12,12 +12,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
     public class EventStoreStream : IEventStream
     {
-        private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
+        private readonly Subject<EventAppendedArgs> _appended = new Subject<EventAppendedArgs>();
         private readonly AsyncLock _mutex = new AsyncLock();
         private readonly EventStore _eventStore;
         private bool _isDeleted;
 
-        public IObservable<(IEventStream sender, IEvent ev)> Appended => _appended;
+        public IObservable<EventAppendedArgs> Appended => _appended;
 
         public string Name { get; }
 
@@ -128,7 +128,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             // forward events to indices so they can update their state
             foreach (var ev in eventsList)
-                _appended.OnNext((this, ev));
+                _appended.OnNext(new EventAppendedArgs(this, ev));
         }
 
         private async Task<IDisposable> BeginCriticalSectionAsync()

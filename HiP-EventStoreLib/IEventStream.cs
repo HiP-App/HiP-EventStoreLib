@@ -6,8 +6,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public interface IEventStream
     {
-        IObservable<(IEventStream sender, IEvent ev)> Appended { get; }
+        /// <summary>
+        /// Is raised when an event is added to the event stream.
+        /// </summary>
+        IObservable<EventAppendedArgs> Appended { get; }
 
+        /// <summary>
+        /// The name of the event stream.
+        /// </summary>
         string Name { get; }
 
         /// <exception cref="ArgumentNullException"/>
@@ -48,5 +54,18 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         IObservable<IEvent> EventAppeared { get; }
 
         event EventHandler<EventParsingFailedArgs> EventParsingFailed;
+    }
+
+    public class EventAppendedArgs
+    {
+        public IEventStream Stream { get; }
+
+        public IEvent Event { get; }
+
+        public EventAppendedArgs(IEventStream stream, IEvent ev)
+        {
+            Stream = stream;
+            Event = ev;
+        }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing

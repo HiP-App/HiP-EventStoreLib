@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
@@ -13,10 +14,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
         private readonly AsyncLock _mutex = new AsyncLock();
         private readonly List<IEvent> _events = new List<IEvent>();
         private readonly Dictionary<string, object> _metadata = new Dictionary<string, object>();
-        private readonly Subject<(IEventStream sender, IEvent ev)> _appended = new Subject<(IEventStream sender, IEvent ev)>();
+        private readonly Subject<EventAppendedArgs> _appended = new Subject<EventAppendedArgs>();
         private bool _isDeleted;
 
-        public IObservable<(IEventStream sender, IEvent ev)> Appended => throw new NotImplementedException();
+        public IObservable<EventAppendedArgs> Appended => _appended;
 
         public string Name { get; }
 
@@ -79,7 +80,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
         public IEventStreamSubscription SubscribeCatchUp()
         {
-            throw new NotImplementedException();
+            using (BeginCriticalSectionAsync().Result)
+                return new DummyEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event));
         }
 
         public async Task SetMetadataAsync(string key, object value)
@@ -103,7 +105,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
             var eventsList = events.ToList();
             _events.AddRange(eventsList);
             foreach (var ev in eventsList)
-                _appended.OnNext((this, ev));
+                _appended.OnNext(new EventAppendedArgs(this, ev));
         }
 
         private async Task<IDisposable> BeginCriticalSectionAsync()
