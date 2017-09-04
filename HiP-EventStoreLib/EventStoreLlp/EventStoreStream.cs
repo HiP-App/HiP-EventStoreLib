@@ -62,7 +62,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             try
             {
-                var transaction = new EventStreamTransaction(this);
+                var transaction = new EventStreamTransaction();
 
                 transaction.WhenCompleted.ContinueWith(async task =>
                 {
@@ -72,9 +72,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
                 return transaction;
             }
-            finally
+            catch
             {
                 lockToken.Dispose();
+                throw;
             }
         }
 
@@ -124,7 +125,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             // persist events in Event Store
             var eventData = eventsList.Select(ev => ev.ToEventData(Guid.NewGuid()));
-            var result = await _eventStore.UnderlyingConnection.AppendToStreamAsync(Name, ExpectedVersion.Any, eventData);
+            await _eventStore.UnderlyingConnection.AppendToStreamAsync(Name, ExpectedVersion.Any, eventData);
 
             // forward events to indices so they can update their state
             foreach (var ev in eventsList)

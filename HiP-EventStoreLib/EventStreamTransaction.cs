@@ -9,7 +9,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public class EventStreamTransaction : IDisposable
     {
-        private readonly IEventStream _stream;
         private readonly List<IEvent> _events = new List<IEvent>();
         private readonly TaskCompletionSource<IReadOnlyList<IEvent>> _completion = new TaskCompletionSource<IReadOnlyList<IEvent>>();
         private bool _isCommitted;
@@ -19,11 +18,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// A task that finishes when the transaction is committed or disposed.
         /// </summary>
         public Task<IReadOnlyList<IEvent>> WhenCompleted => _completion.Task;
-
-        public EventStreamTransaction(IEventStream stream)
-        {
-            _stream = stream;
-        }
 
         public void Append(IEvent ev)
         {

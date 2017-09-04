@@ -45,7 +45,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
             try
             {
-                var transaction = new EventStreamTransaction(this);
+                var transaction = new EventStreamTransaction();
 
                 transaction.WhenCompleted.ContinueWith(task =>
                 {
@@ -55,9 +55,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
                 return transaction;
             }
-            finally
+            catch
             {
                 lockToken.Dispose();
+                throw;
             }
         }
 

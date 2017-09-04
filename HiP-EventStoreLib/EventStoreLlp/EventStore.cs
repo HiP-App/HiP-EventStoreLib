@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         internal IEventStoreConnection UnderlyingConnection { get; }
 
-        public IEventStreamCollection Streams { get; }
+        public IEventStreamCollection Streams => this;
 
         /// <summary>
         /// Initializes an <see cref="EventStore"/> from an already connected <see cref="IEventStoreConnection"/>.
