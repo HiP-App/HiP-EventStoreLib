@@ -15,9 +15,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public IReadOnlyCollection<IDomainIndex> Indices { get; }
 
-        public InMemoryCache(IEnumerable<IDomainIndex> indices)
+        public InMemoryCache(IEnumerable<IDomainIndex> indices, ILogger<InMemoryCache> logger)
         {
             Indices = indices.ToList();
+            _logger = logger;
         }
 
         /// <summary>
