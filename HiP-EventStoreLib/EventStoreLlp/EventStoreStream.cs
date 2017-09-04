@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using System.Linq;
 using System.Reactive.Subjects;
+// ReSharper disable once RedundantUsingDirective (R# is wrong, System.Reactive.Linq IS NOT redundant!)
 using System.Reactive.Linq;
 using Nito.AsyncEx;
 
