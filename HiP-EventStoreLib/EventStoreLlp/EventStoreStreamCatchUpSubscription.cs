@@ -2,6 +2,7 @@
 using EventStore.ClientAPI;
 using System.Reactive.Subjects;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
@@ -23,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 OnEventAppeared);
         }
 
-        private void OnEventAppeared(EventStoreCatchUpSubscription _, ResolvedEvent resolvedEvent)
+        private Task OnEventAppeared(EventStoreCatchUpSubscription _, ResolvedEvent resolvedEvent)
         {
             try
             {
@@ -39,6 +40,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             {
                 EventParsingFailed?.Invoke(this, new EventParsingFailedArgs(resolvedEvent, e));
             }
+
+            return Task.CompletedTask;
         }
 
         public void Dispose()
