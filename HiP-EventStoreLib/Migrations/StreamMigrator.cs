@@ -17,9 +17,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
         public static async Task<(int fromVersion, int toVersion)> MigrateAsync(IEventStore store, string streamName, Assembly migrationSource)
         {
             // Get current stream version from metadata
-            var initialVersion = await GetStreamVersionAsync(store.Streams[streamName]).ConfigureAwait(false) ?? 0;
+            var initialVersion = await GetStreamVersionAsync(store.Streams[streamName]) ?? 0;
             var currentVersion = initialVersion;
-            
+
             // Find all applicable migrations in the current assembly
             var availableMigrations = GetAvailableMigrations(migrationSource)
                 .Where(t => t.Properties.FromVersion >= currentVersion)
@@ -37,7 +37,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
             while ((chosenMigration = availableMigrations.FirstOrDefault(t => t.Properties.FromVersion == currentVersion)) != null)
             {
                 // from the group of matching migrations, choose the one with maximum ToVersion
-                await ExecuteMigrationAsync(chosenMigration, store, streamName).ConfigureAwait(false);
+                await ExecuteMigrationAsync(chosenMigration, store, streamName);
                 currentVersion = chosenMigration.Properties.ToVersion;
             }
 
@@ -46,7 +46,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
 
         private static async Task<int?> GetStreamVersionAsync(IEventStream stream)
         {
-            var metadata = await stream.TryGetMetadataAsync<int>(StreamVersionMetadataKey).ConfigureAwait(false);
+            var metadata = await stream.TryGetMetadataAsync<int>(StreamVersionMetadataKey);
             return metadata.isSuccessful ? metadata.value : default(int?);
         }
 
@@ -69,20 +69,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
             var stream = store.Streams[streamName];
             var migration = (IStreamMigration)Activator.CreateInstance(migrationType.Type.AsType());
             var args = new StreamMigrationArgs(stream);
-            await migration.MigrateAsync(args).ConfigureAwait(false);
+            await migration.MigrateAsync(args);
 
-            using (var transaction = stream.BeginTransaction())
-            {
-                // Soft-delete the stream and recreate it by appending all new events
-                await stream.DeleteAsync().ConfigureAwait(false);
-                var newStream = store.Streams[streamName];
-                await newStream.AppendManyAsync(args.EventsToAppend).ConfigureAwait(false);
+            // Soft-delete the stream and recreate it by appending all new events
+            await stream.DeleteAsync();
+            var newStream = store.Streams[streamName];
+            await newStream.AppendManyAsync(args.EventsToAppend);
 
-                // Write new version to the stream's metadata
-                await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion).ConfigureAwait(false);
-
-                transaction.Commit();
-            }
+            // Write new version to the stream's metadata
+            await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
         }
 
         class MigrationTypeInfo
