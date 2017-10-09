@@ -79,10 +79,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
                 return new DummyEventStoreStreamEnumerator(_events.GetEnumerator());
         }
 
-        public IEventStreamSubscription SubscribeCatchUp()
+        public IEventStreamSubscription SubscribeCatchUp(Action<IEvent> handler)
         {
+            if (handler == null)
+                throw new ArgumentNullException(nameof(handler));
+
             using (BeginCriticalSectionAsync().Result)
-                return new DummyEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event));
+                return new DummyEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event), handler);
         }
 
         public async Task SetMetadataAsync(string key, object value)
