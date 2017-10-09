@@ -14,14 +14,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
     {
         public const string StreamVersionMetadataKey = "StreamVersion";
 
-        public static async Task<(int fromVersion, int toVersion)> MigrateAsync(IEventStore store, string streamName)
+        public static async Task<(int fromVersion, int toVersion)> MigrateAsync(IEventStore store, string streamName, Assembly migrationSource)
         {
             // Get current stream version from metadata
             var initialVersion = await GetStreamVersionAsync(store.Streams[streamName]) ?? 0;
             var currentVersion = initialVersion;
-            
+
             // Find all applicable migrations in the current assembly
-            var availableMigrations = GetAvailableMigrations()
+            var availableMigrations = GetAvailableMigrations(migrationSource)
                 .Where(t => t.Properties.FromVersion >= currentVersion)
                 .OrderBy(t => t.Properties.FromVersion)
                 .ToList();
@@ -50,9 +50,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
             return metadata.isSuccessful ? metadata.value : default(int?);
         }
 
-        private static IEnumerable<MigrationTypeInfo> GetAvailableMigrations()
+        private static IEnumerable<MigrationTypeInfo> GetAvailableMigrations(Assembly migrationSource)
         {
-            return typeof(StreamMigrator).GetTypeInfo().Assembly.DefinedTypes
+            return migrationSource.DefinedTypes
                 .Where(t => t.ImplementedInterfaces.Contains(typeof(IStreamMigration)))
                 .Select(t => new MigrationTypeInfo
                 {
@@ -71,18 +71,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
             var args = new StreamMigrationArgs(stream);
             await migration.MigrateAsync(args);
 
-            using (var transaction = stream.BeginTransaction())
-            {
-                // Soft-delete the stream and recreate it by appending all new events
-                await stream.DeleteAsync();
-                var newStream = store.Streams[streamName];
-                await newStream.AppendManyAsync(args.EventsToAppend);
+            // Soft-delete the stream and recreate it by appending all new events
+            await stream.DeleteAsync();
+            var newStream = store.Streams[streamName];
+            await newStream.AppendManyAsync(args.EventsToAppend);
 
-                // Write new version to the stream's metadata
-                await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
-
-                transaction.Commit();
-            }
+            // Write new version to the stream's metadata
+            await newStream.SetMetadataAsync(StreamVersionMetadataKey, migrationType.Properties.ToVersion);
         }
 
         class MigrationTypeInfo
