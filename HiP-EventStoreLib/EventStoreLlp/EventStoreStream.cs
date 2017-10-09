@@ -113,10 +113,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             }
         }
 
-        public IEventStreamSubscription SubscribeCatchUp()
+        public IEventStreamSubscription SubscribeCatchUp(Action<IEvent> handler)
         {
+            if (handler == null)
+                throw new ArgumentNullException(nameof(handler));
+
             using (BeginCriticalSectionAsync().Result)
-                return new EventStoreStreamCatchUpSubscription(_eventStore.UnderlyingConnection, Name);
+                return new EventStoreStreamCatchUpSubscription(_eventStore.UnderlyingConnection, Name, handler);
         }
 
         private async Task AppendEventsCore(IEnumerable<IEvent> events)
