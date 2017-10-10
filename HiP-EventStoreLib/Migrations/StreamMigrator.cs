@@ -4,7 +4,7 @@ using System;
 using System.Reflection;
 using System.Linq;
 
-// ReSharper disable AccessToModifiedCdlosure
+// ReSharper disable AccessToModifiedClosure
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Migrations
 {
     /// <summary>
