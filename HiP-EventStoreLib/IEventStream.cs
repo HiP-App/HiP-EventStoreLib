@@ -46,13 +46,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         IEventStreamEnumerator GetEnumerator();
 
         /// <exception cref="StreamDeletedException">The stream has been deleted</exception>
-        IEventStreamSubscription SubscribeCatchUp();
+        IEventStreamSubscription SubscribeCatchUp(Action<IEvent> handler);
     }
 
     public interface IEventStreamSubscription : IDisposable
     {
-        IObservable<IEvent> EventAppeared { get; }
-
         event EventHandler<EventParsingFailedArgs> EventParsingFailed;
     }
 
