@@ -13,7 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
     /// <summary>
     /// Service that provides a connection to the EventStore. To be used with dependency injection.
-    /// Requires that an <see cref="InMemoryCache"/>, <see cref="EventStoreEndpointConfig"/>-options and an
+    /// Requires that an <see cref="InMemoryCache"/>, <see cref="EventStoreConfig"/>-options and an
     /// <see cref="EventStoreService"/>-logger are registered in the startup class.
     /// On initialization, the <see cref="EventStoreService"/> connects to the configured event store and
     /// populates the <see cref="InMemoryCache"/> with all events by reading through the configured event stream.
@@ -33,25 +33,32 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
         public EventStoreService(
             InMemoryCache cache,
-            IOptions<EventStoreEndpointConfig> config,
+            IOptions<EventStoreConfig> config,
             ILogger<EventStoreService> logger)
         {
             _logger = logger;
-            _streamName = config.Value.EventStoreStream;
+            _streamName = config.Value.Stream;
 
             var settings = ConnectionSettings.Create()
                 .EnableVerboseLogging()
                 .Build();
 
+            // Validate config
+            if (string.IsNullOrWhiteSpace(config.Value.Host))
+                throw new ArgumentException($"Invalid configuration: Missing value for '{nameof(config.Value.Host)}'");
+
+            if (string.IsNullOrWhiteSpace(config.Value.Stream))
+                throw new ArgumentException($"Invalid configuration: Missing value for '{nameof(config.Value.Stream)}'");
+
             // Prevent accidentally working with a production database
             if (Debugger.IsAttached)
             {
-                Debug.Assert(config.Value.EventStoreHost.Contains("localhost"),
+                Debug.Assert(config.Value.Host.Contains("localhost"),
                     "It looks like you are trying to connect to a production Event Store database. Are you sure you wish to continue?");
             }
 
             // Establish connection to Event Store
-            var uri = new Uri(config.Value.EventStoreHost);
+            var uri = new Uri(config.Value.Host);
             var connection = EventStoreConnection.Create(settings, uri);
             connection.ConnectAsync().Wait();
 
