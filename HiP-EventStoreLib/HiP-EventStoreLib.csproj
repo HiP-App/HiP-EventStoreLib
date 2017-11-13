@@ -6,6 +6,7 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <Version>0.15.0</Version>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
     <Authors>HiP Devs</Authors>
     <Description>Provides core functionality for implementing the event sourcing and CQRS patterns.</Description>
     <Copyright></Copyright>
