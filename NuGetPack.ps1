@@ -6,4 +6,4 @@ Switch ("$env:Build_SourceBranchName")
 }
 
 $nupkg = (ls HiP-EventStoreLib\*.nupkg).FullName
-dotnet nuget push "$nupkg" -k "$MyGetKey" -s "$MyGetFeed"
+dotnet nuget push "$nupkg" -k "$env:MyGetKey" -s "$env:MyGetFeed"
