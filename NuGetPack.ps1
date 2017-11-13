@@ -1,10 +1,10 @@
 Param(
-	[string]$MyGetFeed,
-	[string]$MyGetKey
+	[string]$Feed,
+	[string]$Key
 )
 
-echo "Feed: $env:MyGetFeed"
-echo "Key: $MyGetKey"
+echo "Feed: $Feed"
+echo "Key: $Key"
 
 Switch ("$env:Build_SourceBranchName")
 {
@@ -15,4 +15,4 @@ Switch ("$env:Build_SourceBranchName")
 }
 
 $nupkg = (ls HiP-EventStoreLib\*.nupkg).FullName
-dotnet nuget push "$nupkg" -k "$MyGetKey" -s "$MyGetFeed"
+dotnet nuget push "$nupkg" -k "$Key" -s "$Feed"
