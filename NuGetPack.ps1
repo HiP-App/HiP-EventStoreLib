@@ -1,3 +1,6 @@
+echo "Feed: $env:MyGetFeed"
+echo "Key: $MyGetKey"
+
 Switch ("$env:Build_SourceBranchName")
 {
 	"master" { dotnet pack "HiP-EventStoreLib\HiP-EventStoreLib.csproj" -o . }
