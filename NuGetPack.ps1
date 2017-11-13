@@ -1,5 +1,5 @@
 Param(
-	[string]$MyGetFeed
+	[string]$MyGetFeed,
 	[string]$MyGetKey
 )
 
