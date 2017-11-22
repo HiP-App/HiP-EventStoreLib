@@ -1,7 +1,10 @@
 ﻿using EventStore.ClientAPI;
 using Newtonsoft.Json;
+using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
@@ -20,10 +23,23 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             var eventHeaders = new Dictionary<string, object>(headers ?? NoHeaders)
             {
-                { EventClrTypeHeader, type.AssemblyQualifiedName }
+                { EventClrTypeHeader, type.FullName }
             };
-            
-            var data = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(ev));
+
+            if (typeof(ICustomEvent).IsAssignableFrom(type))
+            {
+                var customEvent = (ICustomEvent)ev;
+                eventHeaders = eventHeaders.Union(customEvent.GetAdditionalMetadata())
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
+
+            var json = JsonConvert.SerializeObject(ev);
+            if (ev is PropertyChangedEvent e)
+            {
+                json = JsonConvert.SerializeObject(e.Value);
+            }
+
+            var data = Encoding.UTF8.GetBytes(json);
             var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders));
 
             return new EventData(eventId, type.Name, true, data, metadata);
@@ -44,7 +60,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 throw new ArgumentException("Cannot resolve event type: Metadata does not specify the CLR type");
 
             var typeName = typeNameEntry.ToString();
-            var type = Type.GetType(typeName);
+            var type = FindType(typeName);
 
             if (type == null)
                 throw new ArgumentException($"Cannot resolve event type: '{typeName}'");
@@ -52,8 +68,43 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             if (!typeof(IEvent).IsAssignableFrom(type))
                 throw new ArgumentException($"The event type does not implement {nameof(IEvent)}");
 
+            if (type == typeof(PropertyChangedEvent))
+            {
+                var valueTypeName = headers[nameof(PropertyChangedEvent.ValueTypeName)].ToString();
+                var propertyName = headers[nameof(PropertyChangedEvent.PropertyName)].ToString();
+                var resourceTypeName = headers[nameof(PropertyChangedEvent.ResourceTypeName)].ToString();
+                var id = (int)(long)headers[nameof(PropertyChangedEvent.Id)];
+                var userId = headers[nameof(PropertyChangedEvent.UserId)].ToString();
+                var valueType = FindType(valueTypeName);
+                var valueJson = Encoding.UTF8.GetString(ev.Data);
+                var value = JsonConvert.DeserializeObject(valueJson, valueType);
+                return new PropertyChangedEvent(propertyName, resourceTypeName, id, userId, value)
+                {
+                    Timestamp = ev.Created
+                };
+            }
+
             var json = Encoding.UTF8.GetString(ev.Data);
-            return (IEvent)JsonConvert.DeserializeObject(json, type);
+            var result = (IEvent)JsonConvert.DeserializeObject(json, type);
+
+            if (typeof(ICustomEvent).IsAssignableFrom(type))
+            {
+                var customEvent = (ICustomEvent)result;
+                customEvent.RestoreMetatdata(headers);
+            }
+
+            if (typeof(EventBase).IsAssignableFrom(type))
+            {
+                ((EventBase)result).Timestamp = ev.Created;
+            }
+
+            return result;
+        }
+
+        private static Type FindType(string typeName)
+        {
+            return Type.GetType(typeName) ??
+                AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.FullName == typeName);
         }
     }
 }
