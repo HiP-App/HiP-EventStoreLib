@@ -1,7 +1,7 @@
 $csproj = (ls HiP-EventStoreLib\*.csproj).FullName
 Switch ("$env:Build_SourceBranchName")
 {
-	"master" { dotnet pack "$csproj" -o . }
+    "master" { dotnet pack "$csproj" -o . }
     "develop" { dotnet pack "$csproj" -o . --version-suffix "develop" }
     "nuget" { dotnet pack "$csproj" -o . --version-suffix "develop" }
     default { exit }
