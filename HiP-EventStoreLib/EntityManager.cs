@@ -73,7 +73,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                 //both values are null
                 if (type == null) continue;
-                //ReSharper disable all
+                //ReSharper disable All
                 //the value was null before was set to a new value
                 if (oldValue == null && newValue != null)
                 {
@@ -102,7 +102,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
                 }
 
-                //ReSharper enable all
+                //ReSharper enable All
             }
         }
     }
