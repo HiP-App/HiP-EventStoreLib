@@ -61,6 +61,16 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             await service.AppendEventsAsync(events);
         }
 
+        /// <summary>
+        /// Compares to entites to each other and returns an enumerable of PropertyChanged events
+        /// </summary>
+        /// <typeparam name="T">Type of both entities</typeparam>
+        /// <param name="oldObject">Old entity</param>
+        /// <param name="newObject">New entity</param>
+        /// <param name="resourceType">Resource type</param>
+        /// <param name="id">Id of the entity</param>
+        /// <param name="userId">Id of the user</param>
+        /// <returns>Enumrable of PropertyChanged events</returns>
         public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
             var properties = typeof(T).GetProperties();
