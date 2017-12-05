@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
     /// <summary>
     /// Abstract base class for events. Contains properties that every event e.g. Id or ResourceTypeName
     /// </summary>
-    public abstract class BaseEvent : ICustomEvent, IEvent, IEntity<int>
+    public abstract class BaseEvent : ICustomEvent, IEntity<int>
     {
         /// <summary>
         /// Name of the Resource type the event belongs to
