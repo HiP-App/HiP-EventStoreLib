@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
@@ -9,24 +8,54 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
+    /// <summary>
+    /// This class can be used to create, delete and update entities. The necessary events are appended to the event stream
+    /// </summary>
     public static class EntityManager
     {
+        /// <summary>
+        /// Creates an entity be appending a CreatedEvent and the necessary PropertyChanged events to the event stream
+        /// </summary>
+        /// <typeparam name="T">Type of the entity</typeparam>
+        /// <param name="service">EventStoreService</param>
+        /// <param name="obj">Object which contains the values</param>
+        /// <param name="resourceType">Resource type of the object</param>
+        /// <param name="id">Id of the object</param>
+        /// <param name="userId">Id of the user</param>
+        /// <returns></returns>
         public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
         {
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
             await service.AppendEventAsync(createdEvent);
-            await CompareAndAddEvents<T>(service, emptyObject, obj, resourceType, id, userId);
+            await UpdateEntity(service, emptyObject, obj, resourceType, id, userId);
         }
 
-
-
+        /// <summary>
+        /// Deletes an entity
+        /// </summary>
+        /// <param name="service">EventStoreService</param>
+        /// <param name="resourceType">Resource type</param>
+        /// <param name="id">Id of the entity</param>
+        /// <param name="userId">Id of the user</param>
+        /// <returns></returns>
         public static async Task DeleteEntity(EventStoreService service, ResourceType resourceType, int id, string userId)
         {
             await service.AppendEventAsync(new DeletedEvent(resourceType.Name, id, userId));
         }
 
-        public static async Task CompareAndAddEvents<T>(EventStoreService service, T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        /// <summary>
+        /// Updates an entity be appending PropertyChanged events to the event stream
+        /// </summary>
+        /// <typeparam name="T">Type of the entitiy</typeparam>
+        /// <param name="service">EventStoreService</param>
+        /// <param name="oldObject">Old object</param>
+        /// <param name="newObject">New object</param>
+        /// <param name="resourceType">Resource type</param>
+        /// <param name="id">Id of the entity</param>
+        /// <param name="userId">Id of the user</param>
+        /// <returns></returns>
+        public static async Task UpdateEntity<T>(EventStoreService service, T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
             var events = CompareEntities(oldObject, newObject, resourceType, id, userId);
             await service.AppendEventsAsync(events);

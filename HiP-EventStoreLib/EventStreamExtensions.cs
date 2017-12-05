@@ -1,5 +1,4 @@
 ﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
-using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using System;
 using System.Threading.Tasks;
 
@@ -7,6 +6,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public static class EventStreamExtensions
     {
+        /// <summary>
+        /// Creates the current state of an entity from the event stream
+        /// </summary>
+        /// <typeparam name="T">Type of the resulting object</typeparam>
+        /// <param name="stream">Event stream</param>
+        /// <param name="resourceType">Resource type</param>
+        /// <param name="id"></param>
+        /// <returns>The resulting object</returns>
         public static async Task<T> GetCurrentObjectFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : new()
         {
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
@@ -42,7 +49,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             {
                 throw new ArgumentException("A resource type with the given name does not exist");
             }
-
         }
     }
 }
