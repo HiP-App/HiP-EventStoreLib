@@ -4,8 +4,14 @@ using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
 {
-    public abstract class EventBase : ICustomEvent, IEvent, IEntity<int>
+    /// <summary>
+    /// Abstract base class for events. Contains properties that every event e.g. Id or ResourceTypeName
+    /// </summary>
+    public abstract class BaseEvent : ICustomEvent, IEvent, IEntity<int>
     {
+        /// <summary>
+        /// Name of the Resource type the event belongs to
+        /// </summary>
         [JsonIgnore]
         public string ResourceTypeName { get; set; }
 
@@ -16,13 +22,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
         public string UserId { get; set; }
 
         [JsonIgnore]
-        public DateTimeOffset Timestamp { get; set; } 
+        public DateTimeOffset Timestamp { get; set; }
 
-        public EventBase(string resourceTypeName, int id, string userId)
+        public BaseEvent(string resourceTypeName, int id, string userId)
         {
             ResourceTypeName = resourceTypeName;
             Id = id;
             UserId = userId;
+            Timestamp = DateTimeOffset.Now;
         }
 
         public virtual IDictionary<string, object> GetAdditionalMetadata()
@@ -31,7 +38,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
             {
                 { nameof(ResourceTypeName), ResourceTypeName},
                 { nameof(Id), Id },
-                { nameof(UserId), UserId}
+                { nameof(UserId), UserId},
+                { nameof(Timestamp), Timestamp }
             };
         }
 
@@ -52,6 +60,16 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
             {
                 UserId = (string)userId;
             }
+
+            if (metadata.TryGetValue(nameof(Timestamp), out var timestamp))
+            {
+                Timestamp = (DateTimeOffset)timestamp;
+            }
+        }
+
+        public ResourceType GetEntityType()
+        {
+            return ResourceType.ResourceTypeDictionary[ResourceTypeName];
         }
     }
 }

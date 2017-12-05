@@ -4,7 +4,6 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
@@ -12,6 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
     public static class EventDataExtensions
     {
         private const string EventClrTypeHeader = "ClrType";
+        private static readonly JsonSerializerSettings HeaderSerializationSettings = new JsonSerializerSettings() { DateParseHandling = DateParseHandling.DateTimeOffset };
         private static readonly Dictionary<string, object> NoHeaders = new Dictionary<string, object>();
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             }
 
             var data = Encoding.UTF8.GetBytes(json);
-            var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders));
+            var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders, HeaderSerializationSettings));
 
             return new EventData(eventId, type.Name, true, data, metadata);
         }
@@ -54,7 +54,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 throw new ArgumentException("The event is not JSON-formatted");
 
             var metadata = Encoding.UTF8.GetString(ev.Metadata);
-            var headers = JsonConvert.DeserializeObject<IDictionary<string, object>>(metadata);
+            var headers = JsonConvert.DeserializeObject<IDictionary<string, object>>(metadata, HeaderSerializationSettings);
 
             if (headers == null || !headers.TryGetValue(EventClrTypeHeader, out var typeNameEntry))
                 throw new ArgumentException("Cannot resolve event type: Metadata does not specify the CLR type");
@@ -70,17 +70,25 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             if (type == typeof(PropertyChangedEvent))
             {
+                //Property changed events need to be handeled seperately since the event data only contains the value 
                 var valueTypeName = headers[nameof(PropertyChangedEvent.ValueTypeName)].ToString();
                 var propertyName = headers[nameof(PropertyChangedEvent.PropertyName)].ToString();
                 var resourceTypeName = headers[nameof(PropertyChangedEvent.ResourceTypeName)].ToString();
                 var id = (int)(long)headers[nameof(PropertyChangedEvent.Id)];
                 var userId = headers[nameof(PropertyChangedEvent.UserId)].ToString();
                 var valueType = FindType(valueTypeName);
-                var valueJson = Encoding.UTF8.GetString(ev.Data);
-                var value = JsonConvert.DeserializeObject(valueJson, valueType);
+                object value = null;
+                if (valueType != null)
+                {
+                    var valueJson = Encoding.UTF8.GetString(ev.Data);
+                    value = JsonConvert.DeserializeObject(valueJson, valueType);
+                }
+
+                var timestamp = (DateTimeOffset)headers[nameof(PropertyChangedEvent.Timestamp)];
+
                 return new PropertyChangedEvent(propertyName, resourceTypeName, id, userId, value)
                 {
-                    Timestamp = ev.Created
+                    Timestamp = timestamp
                 };
             }
 
@@ -93,10 +101,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 customEvent.RestoreMetatdata(headers);
             }
 
-            if (typeof(EventBase).IsAssignableFrom(type))
-            {
-                ((EventBase)result).Timestamp = ev.Created;
-            }
 
             return result;
         }

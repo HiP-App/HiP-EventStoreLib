@@ -11,7 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public static class EntityManager
     {
-        public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId)
+        public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
         {
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
@@ -19,13 +19,20 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             await CompareAndAddEvents<T>(service, emptyObject, obj, resourceType, id, userId);
         }
 
-        public static async Task CompareAndAddEvents<T>(EventStoreService service, T obj1, T obj2, ResourceType resourceType, int id, string userId)
+
+
+        public static async Task DeleteEntity(EventStoreService service, ResourceType resourceType, int id, string userId)
         {
-            var events = CompareEntities(obj1, obj2, resourceType, id, userId);
+            await service.AppendEventAsync(new DeletedEvent(resourceType.Name, id, userId));
+        }
+
+        public static async Task CompareAndAddEvents<T>(EventStoreService service, T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        {
+            var events = CompareEntities(oldObject, newObject, resourceType, id, userId);
             await service.AppendEventsAsync(events);
         }
 
-        private static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
             var properties = typeof(T).GetProperties();
             foreach (var prop in properties)
@@ -49,10 +56,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 }
                 else if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
-                    var oldList = ((IEnumerable)oldValue).Cast<object>();
-                    var newList = ((IEnumerable)newValue).Cast<object>();
+                    var oldList = ((IEnumerable)oldValue)?.Cast<object>();
+                    var newList = ((IEnumerable)newValue)?.Cast<object>();
 
-                    if (!oldList.SequenceEqual(newList))
+                    if (oldList == null || newList == null)
+                    {
+                        yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
+                    }
+                    else if (!oldList.SequenceEqual(newList))
                     {
                         yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
                     }

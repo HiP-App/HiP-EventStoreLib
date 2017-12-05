@@ -4,11 +4,17 @@ using System;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
 {
-    public class PropertyChangedEvent : EventBase
+    /// <summary>
+    /// Event that is used if a property of a certain entity has changed
+    /// </summary>
+    public class PropertyChangedEvent : BaseEvent
     {
         [JsonIgnore]
         public string PropertyName { get; set; }
 
+        /// <summary>
+        /// Name of the value type. This property can be used for correctly deserializing the <see cref="Value"/>
+        /// </summary>
         [JsonIgnore]
         public string ValueTypeName { get; set; }
 
@@ -18,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
         {
             PropertyName = propertyName;
             Value = value;
-            ValueTypeName = value.GetType().FullName;
+            ValueTypeName = value?.GetType().FullName ?? String.Empty;
         }
 
         public override IDictionary<string, object> GetAdditionalMetadata()

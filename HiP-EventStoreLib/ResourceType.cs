@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
@@ -21,6 +21,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         public Type Type { get; private set; }
 
         [BsonConstructor]
+        [JsonConstructor]
         private ResourceType(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -35,9 +36,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public override bool Equals(object obj) => obj is ResourceType other && Equals(other);
 
-        public bool Equals(ResourceType other) => Name == other.Name;
+        public bool Equals(ResourceType other) => Name == other?.Name;
 
-        public static bool operator ==(ResourceType a, ResourceType b) => a?.Equals(b) ?? b == null;
+        public static bool operator ==(ResourceType a, ResourceType b) => Equals(a, b);
 
         public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
 

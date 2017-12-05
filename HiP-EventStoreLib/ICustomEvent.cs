@@ -7,7 +7,16 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public interface ICustomEvent : IEvent
     {
+        /// <summary>
+        /// Creates a dictionary with additional metadata that should be stored with the event
+        /// </summary>
+        /// <returns>Dictionary with metadata</returns>
         IDictionary<string, object> GetAdditionalMetadata();
+
+        /// <summary>
+        /// Restores properties from metadata
+        /// </summary>
+        /// <param name="metadata">Dictionary with metadata</param>
         void RestoreMetatdata(IDictionary<string, object> metadata);
     }
 }
