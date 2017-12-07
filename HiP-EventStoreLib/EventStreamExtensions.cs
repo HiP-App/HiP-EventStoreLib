@@ -9,12 +9,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <summary>
         /// Creates the current state of an entity from the event stream
         /// </summary>
-        /// <typeparam name="T">Type of the resulting object</typeparam>
+        /// <typeparam name="T">Type of the resulting entity</typeparam>
         /// <param name="stream">Event stream</param>
         /// <param name="resourceType">Resource type</param>
         /// <param name="id"></param>
-        /// <returns>The resulting object</returns>
-        public static async Task<T> GetCurrentObjectFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
+        /// <returns>The resulting entity</returns>
+        public static async Task<T> GetCurrentEntityFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
         {
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
             {

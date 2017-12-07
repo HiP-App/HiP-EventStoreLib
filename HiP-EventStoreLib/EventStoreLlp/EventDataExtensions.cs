@@ -93,8 +93,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             if (typeof(IEventWithMetadata).IsAssignableFrom(type))
             {
-                var customEvent = (IEventWithMetadata)result;
-                customEvent.RestoreMetadata(headers);
+                var eventWithMetadata = (IEventWithMetadata)result;
+                eventWithMetadata.RestoreMetadata(headers);
             }
 
 
