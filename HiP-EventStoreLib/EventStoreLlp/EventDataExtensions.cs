@@ -26,18 +26,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 { EventClrTypeHeader, type.FullName }
             };
 
-            if (typeof(ICustomEvent).IsAssignableFrom(type))
+            if (typeof(IEventWithMetadata).IsAssignableFrom(type))
             {
-                var customEvent = (ICustomEvent)ev;
-                eventHeaders = eventHeaders.Union(customEvent.GetAdditionalMetadata())
+                var customEvent = (IEventWithMetadata)ev;
+                eventHeaders = eventHeaders.Concat(customEvent.GetAdditionalMetadata())
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             }
 
-            var json = JsonConvert.SerializeObject(ev);
-            if (ev is PropertyChangedEvent e)
-            {
-                json = JsonConvert.SerializeObject(e.Value);
-            }
+            var json = JsonConvert.SerializeObject(ev is PropertyChangedEvent e ? e.Value : ev);
 
             var data = Encoding.UTF8.GetBytes(json);
             var metadata = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(eventHeaders, HeaderSerializationSettings));
@@ -54,7 +50,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 throw new ArgumentException("The event is not JSON-formatted");
 
             var metadata = Encoding.UTF8.GetString(ev.Metadata);
-            var headers = JsonConvert.DeserializeObject<IDictionary<string, object>>(metadata, HeaderSerializationSettings);
+            var headers = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, object>>(metadata, HeaderSerializationSettings);
 
             if (headers == null || !headers.TryGetValue(EventClrTypeHeader, out var typeNameEntry))
                 throw new ArgumentException("Cannot resolve event type: Metadata does not specify the CLR type");
@@ -95,10 +91,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
             var json = Encoding.UTF8.GetString(ev.Data);
             var result = (IEvent)JsonConvert.DeserializeObject(json, type);
 
-            if (typeof(ICustomEvent).IsAssignableFrom(type))
+            if (typeof(IEventWithMetadata).IsAssignableFrom(type))
             {
-                var customEvent = (ICustomEvent)result;
-                customEvent.RestoreMetatdata(headers);
+                var customEvent = (IEventWithMetadata)result;
+                customEvent.RestoreMetadata(headers);
             }
 
 

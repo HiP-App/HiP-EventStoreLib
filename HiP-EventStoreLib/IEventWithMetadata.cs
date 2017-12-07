@@ -5,7 +5,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// <summary>
     /// Interface for events that have additional information (e.g. in metadata) and need to be serialized/deserialized diffently
     /// </summary>
-    public interface ICustomEvent : IEvent
+    public interface IEventWithMetadata : IEvent
     {
         /// <summary>
         /// Creates a dictionary with additional metadata that should be stored with the event
@@ -17,6 +17,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// Restores properties from metadata
         /// </summary>
         /// <param name="metadata">Dictionary with metadata</param>
-        void RestoreMetatdata(IDictionary<string, object> metadata);
+        void RestoreMetadata(IReadOnlyDictionary<string, object> metadata);
     }
 }

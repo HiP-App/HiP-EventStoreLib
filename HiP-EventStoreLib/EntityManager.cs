@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     public static class EntityManager
     {
         /// <summary>
-        /// Creates an entity be appending a CreatedEvent and the necessary PropertyChanged events to the event stream
+        /// Creates an entity be appending a <see cref="CreatedEvent"/> and the necessary <see cref="PropertyChangedEvent"/>s to the event stream
         /// </summary>
         /// <typeparam name="T">Type of the entity</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -25,6 +25,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <returns></returns>
         public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
         {
+            if (obj == null) throw new ArgumentException($"The object to store cannot be null", nameof(obj));
+
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
             await service.AppendEventAsync(createdEvent);
@@ -32,7 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Deletes an entity
+        /// Deletes an entity by appendeing a <see cref="DeletedEvent"/> to the event stream
         /// </summary>
         /// <param name="service">EventStoreService</param>
         /// <param name="resourceType">Resource type</param>
@@ -45,7 +47,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Updates an entity be appending PropertyChanged events to the event stream
+        /// Updates an entity be appending <see cref="PropertyChangedEvent"/>s to the event stream. Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string)"/> to compare the entities
         /// </summary>
         /// <typeparam name="T">Type of the entitiy</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -62,7 +64,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Compares to entites to each other and returns an enumerable of PropertyChanged events
+        /// Compares two entites to each other and returns an enumerable of <see cref="PropertyChangedEvent"/>. The comparison is based on the readable public properties of type <typeparamref name="T"/>. 
         /// </summary>
         /// <typeparam name="T">Type of both entities</typeparam>
         /// <param name="oldObject">Old entity</param>
@@ -70,10 +72,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="resourceType">Resource type</param>
         /// <param name="id">Id of the entity</param>
         /// <param name="userId">Id of the user</param>
-        /// <returns>Enumrable of PropertyChanged events</returns>
+        /// <returns>Enumrable of <see cref="PropertyChangedEvent"/>s </returns>
         public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
-            var properties = typeof(T).GetProperties();
+            if (oldObject == null || newObject == null) throw new ArgumentNullException($"None of the objects to compare can be null");
+            if (resourceType == null || !ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name)) throw new ArgumentException("A valid ResourceType has to be provided", nameof(resourceType));
+
+            var properties = typeof(T).GetProperties().Where(p => p.CanRead);
             foreach (var prop in properties)
             {
                 var oldValue = prop.GetValue(oldObject);
@@ -83,13 +88,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                 //both values are null
                 if (type == null) continue;
-                //ReSharper disable All
-                //the value was null before was set to a new value
-                if (oldValue == null && newValue != null)
-                {
-                    yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
-                }
-                else if (type == typeof(string) && !Equals(oldValue, newValue))
+
+                if (type == typeof(string) && !Equals(oldValue, newValue))
                 {
                     yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
                 }
@@ -98,21 +98,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     var oldList = ((IEnumerable)oldValue)?.Cast<object>();
                     var newList = ((IEnumerable)newValue)?.Cast<object>();
 
-                    if (oldList == null || newList == null)
-                    {
-                        yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
-                    }
-                    else if (!oldList.SequenceEqual(newList))
+                    if (oldList == null || newList == null || !oldList.SequenceEqual(newList))
                     {
                         yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
                     }
                 }
-                else if (!oldValue.Equals(newValue))
+                else if (!Equals(oldValue, newValue))
                 {
                     yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
                 }
-
-                //ReSharper enable All
             }
         }
     }

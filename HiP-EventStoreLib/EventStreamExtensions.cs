@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="resourceType">Resource type</param>
         /// <param name="id"></param>
         /// <returns>The resulting object</returns>
-        public static async Task<T> GetCurrentObjectFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : new()
+        public static async Task<T> GetCurrentObjectFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
         {
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
             {
@@ -38,6 +38,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                             {
                                 var propertyInfo = targetType.GetProperty(propertyEv.PropertyName);
                                 propertyInfo.SetValue(obj, propertyEv.Value);
+                            }
+                            break;
+                        case DeletedEvent deletedEv:
+                            if (Equals(deletedEv.ResourceTypeName, resourceType.Name) && deletedEv.Id == id)
+                            {
+                                return default(T);
                             }
                             break;
                     }

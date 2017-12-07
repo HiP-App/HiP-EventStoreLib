@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public class ResourceType : IEquatable<ResourceType>
     {
-        private static Dictionary<string, ResourceType> _dictionary = new Dictionary<string, ResourceType>();
+        private readonly static Dictionary<string, ResourceType> _dictionary = new Dictionary<string, ResourceType>();
         public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => _dictionary;
 
         /// <summary>
@@ -28,6 +28,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 throw new ArgumentException("Name was null or empty", nameof(name));
 
             Name = name;
+
+            if (_dictionary.TryGetValue(name, out var type))
+            {
+                //this is used for deserialization
+                Type = type.Type;
+            }
         }
 
         public override string ToString() => Name ?? "";

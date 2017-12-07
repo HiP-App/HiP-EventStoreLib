@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
     /// <summary>
     /// Abstract base class for events. Contains properties that every event e.g. Id or ResourceTypeName
     /// </summary>
-    public abstract class BaseEvent : ICustomEvent, IEntity<int>
+    public abstract class BaseEvent : IEventWithMetadata, IEntity<int>
     {
         /// <summary>
         /// Name of the Resource type the event belongs to
@@ -43,7 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
             };
         }
 
-        public virtual void RestoreMetatdata(IDictionary<string, object> metadata)
+        public virtual void RestoreMetadata(IReadOnlyDictionary<string, object> metadata)
         {
 
             if (metadata.TryGetValue(nameof(ResourceTypeName), out var typeName))

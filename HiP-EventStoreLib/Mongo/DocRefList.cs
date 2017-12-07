@@ -57,8 +57,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         {
             return obj is DocRefList<T> list &&
                    base.Equals(obj) &&
-                   Ids.SequenceEqual(list.Ids) &&
-                   Count == list.Count;
+                   Ids.SequenceEqual(list.Ids);
         }
 
         public override int GetHashCode()

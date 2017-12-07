@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
     /// <summary>
     /// Event that is used if a property of a certain entity has changed
     /// </summary>
-    public class PropertyChangedEvent : BaseEvent
+    public sealed class PropertyChangedEvent : BaseEvent
     {
         [JsonIgnore]
         public string PropertyName { get; set; }
@@ -35,9 +35,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
             return dict;
         }
 
-        public override void RestoreMetatdata(IDictionary<string, object> metadata)
+        public override void RestoreMetadata(IReadOnlyDictionary<string, object> metadata)
         {
-            base.RestoreMetatdata(metadata);
+            base.RestoreMetadata(metadata);
             if (metadata.TryGetValue(nameof(PropertyName), out var propertyName))
             {
                 PropertyName = propertyName as string;
