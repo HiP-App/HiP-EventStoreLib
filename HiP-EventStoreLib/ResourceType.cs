@@ -7,8 +7,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public class ResourceType : IEquatable<ResourceType>
     {
-        private readonly static Dictionary<string, ResourceType> _dictionary = new Dictionary<string, ResourceType>();
-        public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => _dictionary;
+        private readonly static Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
+        public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => Dictionary;
 
         /// <summary>
         /// This name is used in two ways:
@@ -29,7 +29,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
             Name = name;
 
-            if (_dictionary.TryGetValue(name, out var type))
+            if (Dictionary.TryGetValue(name, out var type))
             {
                 //this is used for deserialization
                 Type = type.Type;
@@ -52,7 +52,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         {
             var resourceType = new ResourceType(name);
             resourceType.Type = type;
-            _dictionary.Add(name, resourceType);
+            Dictionary.Add(name, resourceType);
             return resourceType;
         }
     }
