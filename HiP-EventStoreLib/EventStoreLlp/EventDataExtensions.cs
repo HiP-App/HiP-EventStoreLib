@@ -66,7 +66,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 
             if (type == typeof(PropertyChangedEvent))
             {
-                //Property changed events need to be handeled seperately since the event data only contains the value 
+                // Property changed events need to be handled seperately since the event data only contains the value 
                 var valueTypeName = headers[nameof(PropertyChangedEvent.ValueTypeName)].ToString();
                 var propertyName = headers[nameof(PropertyChangedEvent.PropertyName)].ToString();
                 var resourceTypeName = headers[nameof(PropertyChangedEvent.ResourceTypeName)].ToString();

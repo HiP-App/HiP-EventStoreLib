@@ -7,14 +7,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     public static class EventStreamExtensions
     {
         /// <summary>
-        /// Creates the current state of an entity from the event stream
+        /// Creates the current state of an entity from the event stream.
         /// </summary>
         /// <typeparam name="T">Type of the resulting entity</typeparam>
         /// <param name="stream">Event stream</param>
         /// <param name="resourceType">Resource type</param>
         /// <param name="id"></param>
         /// <returns>The resulting entity</returns>
-        public static async Task<T> GetCurrentEntityFromEventStream<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
+        public static async Task<T> GetCurrentEntity<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
         {
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
             {
@@ -22,7 +22,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 if (!resourceType.Type.Equals(targetType)) throw new ArgumentException("The type parameter doesn't match up with the associated type of the ResourceType");
 
                 var enumerator = stream.GetEnumerator();
-                T obj = default(T);
+                var obj = default(T);
 
                 while (await enumerator.MoveNextAsync())
                 {
@@ -40,11 +40,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                                 propertyInfo.SetValue(obj, propertyEv.Value);
                             }
                             break;
+
                         case DeletedEvent deletedEv:
                             if (Equals(deletedEv.ResourceTypeName, resourceType.Name) && deletedEv.Id == id)
-                            {
-                                return default(T);
-                            }
+                                obj = default(T); // entity might be recreated later
                             break;
                     }
                 }

@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     public class ResourceType : IEquatable<ResourceType>
     {
-        private readonly static Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
+        private static readonly Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
         public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => Dictionary;
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
             if (Dictionary.TryGetValue(name, out var type))
             {
-                //this is used for deserialization
+                // this is used for deserialization
                 Type = type.Type;
             }
         }
