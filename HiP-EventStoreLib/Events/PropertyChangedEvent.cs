@@ -5,7 +5,7 @@ using System;
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
 {
     /// <summary>
-    /// Event that is used if a property of a certain entity has changed
+    /// Event that is used if a property of a certain entity has changed.
     /// </summary>
     public sealed class PropertyChangedEvent : BaseEvent
     {
@@ -13,7 +13,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
         public string PropertyName { get; set; }
 
         /// <summary>
-        /// Name of the value type. This property can be used for correctly deserializing the <see cref="Value"/>
+        /// Name of the value type. This property can be used for correctly deserializing the <see cref="Value"/>.
         /// </summary>
         [JsonIgnore]
         public string ValueTypeName { get; set; }

@@ -9,12 +9,13 @@ using System;
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
     /// <summary>
-    /// This class can be used to create, delete and update entities. The necessary events are appended to the event stream
+    /// This class can be used to create, delete and update entities. The necessary events are appended to the event stream.
     /// </summary>
     public static class EntityManager
     {
         /// <summary>
-        /// Creates an entity be appending a <see cref="CreatedEvent"/> and the necessary <see cref="PropertyChangedEvent"/>s to the event stream
+        /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
+        /// <see cref="PropertyChangedEvent"/>s to the event stream.
         /// </summary>
         /// <typeparam name="T">Type of the entity</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -25,7 +26,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <returns></returns>
         public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
         {
-            if (obj == null) throw new ArgumentException($"The object to store cannot be null", nameof(obj));
+            if (obj == null)
+                throw new ArgumentException("The object to store cannot be null", nameof(obj));
 
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
@@ -34,7 +36,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Deletes an entity by appendeing a <see cref="DeletedEvent"/> to the event stream
+        /// Deletes an entity by appendeing a <see cref="DeletedEvent"/> to the event stream.
         /// </summary>
         /// <param name="service">EventStoreService</param>
         /// <param name="resourceType">Resource type</param>
@@ -47,7 +49,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Updates an entity be appending <see cref="PropertyChangedEvent"/>s to the event stream. Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string)"/> to compare the entities
+        /// Updates an entity by appending <see cref="PropertyChangedEvent"/>s to the event stream.
+        /// Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string)"/> to compare the entities.
         /// </summary>
         /// <typeparam name="T">Type of the entitiy</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -64,7 +67,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         }
 
         /// <summary>
-        /// Compares two entites to each other and returns an enumerable of <see cref="PropertyChangedEvent"/>. The comparison is based on the readable public properties of type <typeparamref name="T"/>. 
+        /// Compares two entites to each other and returns an enumerable of <see cref="PropertyChangedEvent"/>.
+        /// The comparison is based on the readable public properties of type <typeparamref name="T"/>. 
         /// </summary>
         /// <typeparam name="T">Type of both entities</typeparam>
         /// <param name="oldObject">Old entity</param>
@@ -72,11 +76,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="resourceType">Resource type</param>
         /// <param name="id">Id of the entity</param>
         /// <param name="userId">Id of the user</param>
-        /// <returns>Enumrable of <see cref="PropertyChangedEvent"/>s </returns>
+        /// <returns>Enumerable of <see cref="PropertyChangedEvent"/>s</returns>
         public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
-            if (oldObject == null || newObject == null) throw new ArgumentNullException($"None of the objects to compare can be null");
-            if (resourceType == null || !ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name)) throw new ArgumentException("A valid ResourceType has to be provided", nameof(resourceType));
+            if (oldObject == null || newObject == null)
+                throw new ArgumentNullException("None of the objects to compare can be null");
+
+            if (resourceType == null || !ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
+                throw new ArgumentException("A valid ResourceType has to be provided", nameof(resourceType));
 
             var properties = typeof(T).GetProperties().Where(p => p.CanRead);
             foreach (var prop in properties)
@@ -86,7 +93,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                 var type = oldValue?.GetType() ?? newValue?.GetType();
 
-                //both values are null
+                // both values are null
                 if (type == null) continue;
 
                 if (type == typeof(string) && !Equals(oldValue, newValue))
