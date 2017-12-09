@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
 {
@@ -29,6 +30,21 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         {
             Collection = collection;
             Database = database;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is DocRefBase @base &&
+                   Collection == @base.Collection &&
+                   Database == @base.Database;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1922955825;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Collection);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Database);
+            return hashCode;
         }
     }
 }

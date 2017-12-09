@@ -52,5 +52,21 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         public bool Contains(BsonValue id) => Ids.Contains(id);
 
         public IEnumerator<BsonValue> GetEnumerator() => Ids.GetEnumerator();
+
+        public override bool Equals(object obj)
+        {
+            return obj is DocRefList<T> list &&
+                   base.Equals(obj) &&
+                   Ids.SequenceEqual(list.Ids);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1381050117;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<OrderedSet<BsonValue>>.Default.GetHashCode(Ids);
+            hashCode = hashCode * -1521134295 + Count.GetHashCode();
+            return hashCode;
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
 {
@@ -30,5 +31,20 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
 
         public override string ToString() =>
             $"{Id} (collection: '{Collection ?? "<unspecified>"}', database: '{Database ?? "<unspecified>"}')";
+
+        public override bool Equals(object obj)
+        {
+            return obj is DocRef<T> @ref &&
+                   base.Equals(obj) &&
+                   EqualityComparer<BsonValue>.Default.Equals(Id, @ref.Id);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 921221376;
+            hashCode = hashCode * -1521134295 + base.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<BsonValue>.Default.GetHashCode(Id);
+            return hashCode;
+        }
     }
 }
