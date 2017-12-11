@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
 {
