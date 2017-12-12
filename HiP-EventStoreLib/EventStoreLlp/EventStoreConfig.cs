@@ -3,10 +3,11 @@
     /// <summary>
     /// Specifies the configuration fields that are required for <see cref="EventStoreService"/> to work.
     /// </summary>
-    public class EventStoreConfig
+    public sealed class EventStoreConfig
     {
         /// <summary>
         /// Endpoint of the Event Store.
+        /// Default value: "tcp://localhost:1113"
         /// 
         /// Examples:
         /// "tcp://localhost:1113",
@@ -15,7 +16,7 @@
         /// 
         /// See also: http://docs.geteventstore.com/dotnet-api/4.0.0/connecting-to-a-server/
         /// </summary>
-        public string Host { get; set; }
+        public string Host { get; set; } = "tcp://localhost:1113";
 
         /// <summary>
         /// Name of the event stream to read from and write to.
