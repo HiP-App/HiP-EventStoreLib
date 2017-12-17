@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiP-EventStoreLib", "HiP-EventStoreLib\HiP-EventStoreLib.csproj", "{61193414-15D4-4573-A3B0-E56DF83FAF9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HiP-EventStoreLib", "HiP-EventStoreLib\HiP-EventStoreLib.csproj", "{61193414-15D4-4573-A3B0-E56DF83FAF9F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiP-EventStoreLib.Tests", "HiP-EventStoreLib.Tests\HiP-EventStoreLib.Tests.csproj", "{0E7EEECA-2762-42D2-8187-3C110FCCFE58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{61193414-15D4-4573-A3B0-E56DF83FAF9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61193414-15D4-4573-A3B0-E56DF83FAF9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61193414-15D4-4573-A3B0-E56DF83FAF9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E7EEECA-2762-42D2-8187-3C110FCCFE58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E7EEECA-2762-42D2-8187-3C110FCCFE58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E7EEECA-2762-42D2-8187-3C110FCCFE58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E7EEECA-2762-42D2-8187-3C110FCCFE58}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1220C7E9-5C1A-4507-82D9-248A6959C01B}
 	EndGlobalSection
 EndGlobal

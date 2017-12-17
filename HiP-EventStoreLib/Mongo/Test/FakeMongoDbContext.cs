@@ -34,6 +34,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
 
         public void AddReference(EntityId source, EntityId target)
         {
+            if (!_entities.ContainsKey(source) || !_entities.ContainsKey(target))
+                return;
+
             IncomingRefs(target).Add(source);
             OutgoingRefs(source).Add(target);
         }
@@ -83,8 +86,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
 
         public bool RemoveReference(EntityId source, EntityId target)
         {
-            if (OutgoingRefs(source).Remove(target))
+            if (_entities.ContainsKey(source) && _entities.ContainsKey(target))
             {
+                OutgoingRefs(source).Remove(target);
                 IncomingRefs(target).Remove(source);
                 return true;
             }
