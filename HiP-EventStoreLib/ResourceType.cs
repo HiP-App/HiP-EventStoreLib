@@ -8,7 +8,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     public class ResourceType : IEquatable<ResourceType>
     {
         private static readonly Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
-        public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => Dictionary;
 
         /// <summary>
         /// This name is used in two ways:
@@ -55,5 +54,30 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             Dictionary.Add(name, resourceType);
             return resourceType;
         }
+
+        /// <summary>
+        /// Converts the specified name to one of the registered resource types.
+        /// Throws if no resource type with that name is registered.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="FormatException"/>
+        public static ResourceType Parse(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            if (Dictionary.TryGetValue(name, out var type))
+                return type;
+
+            throw new FormatException($"No {nameof(ResourceType)} with name '{name}' is registered");
+        }
+
+        /// <summary>
+        /// Tries to convert the specified name to one of the registered resource types.
+        /// Returns false if no resource type with that name is registered.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"/>
+        public static bool TryParse(string name, out ResourceType type) =>
+            Dictionary.TryGetValue(name, out type);
     }
 }

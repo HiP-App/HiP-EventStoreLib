@@ -16,44 +16,37 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <returns>The resulting entity</returns>
         public static async Task<T> GetCurrentEntity<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
         {
-            if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
+            var targetType = typeof(T);
+            if (!resourceType.Type.Equals(targetType)) throw new ArgumentException("The type parameter doesn't match up with the associated type of the ResourceType");
+
+            var enumerator = stream.GetEnumerator();
+            var obj = default(T);
+
+            while (await enumerator.MoveNextAsync())
             {
-                var targetType = typeof(T);
-                if (!resourceType.Type.Equals(targetType)) throw new ArgumentException("The type parameter doesn't match up with the associated type of the ResourceType");
-
-                var enumerator = stream.GetEnumerator();
-                var obj = default(T);
-
-                while (await enumerator.MoveNextAsync())
+                switch (enumerator.Current)
                 {
-                    switch (enumerator.Current)
-                    {
-                        case CreatedEvent createdEv:
-                            if (createdEv.ResourceTypeName.Equals(resourceType.Name) && createdEv.Id == id)
-                                obj = Activator.CreateInstance<T>();
-                            break;
+                    case CreatedEvent createdEv:
+                        if (createdEv.ResourceTypeName.Equals(resourceType.Name) && createdEv.Id == id)
+                            obj = Activator.CreateInstance<T>();
+                        break;
 
-                        case PropertyChangedEvent propertyEv:
-                            if (!Equals(obj, default(T)) && Equals(propertyEv.ResourceTypeName, resourceType.Name) && propertyEv.Id == id)
-                            {
-                                var propertyInfo = targetType.GetProperty(propertyEv.PropertyName);
-                                propertyInfo.SetValue(obj, propertyEv.Value);
-                            }
-                            break;
+                    case PropertyChangedEvent propertyEv:
+                        if (!Equals(obj, default(T)) && Equals(propertyEv.ResourceTypeName, resourceType.Name) && propertyEv.Id == id)
+                        {
+                            var propertyInfo = targetType.GetProperty(propertyEv.PropertyName);
+                            propertyInfo.SetValue(obj, propertyEv.Value);
+                        }
+                        break;
 
-                        case DeletedEvent deletedEv:
-                            if (Equals(deletedEv.ResourceTypeName, resourceType.Name) && deletedEv.Id == id)
-                                obj = default(T); // entity might be recreated later
-                            break;
-                    }
+                    case DeletedEvent deletedEv:
+                        if (Equals(deletedEv.ResourceTypeName, resourceType.Name) && deletedEv.Id == id)
+                            obj = default(T); // entity might be recreated later
+                        break;
                 }
+            }
 
-                return obj;
-            }
-            else
-            {
-                throw new ArgumentException("A resource type with the given name does not exist");
-            }
+            return obj;
         }
     }
 }
