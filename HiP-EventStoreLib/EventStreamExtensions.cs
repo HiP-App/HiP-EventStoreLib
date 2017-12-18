@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="resourceType">Resource type</param>
         /// <param name="id"></param>
         /// <returns>The resulting entity</returns>
-        public static async Task<T> GetCurrentEntity<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
+        public static async Task<T> GetCurrentEntityAsync<T>(this IEventStream stream, ResourceType resourceType, int id) where T : class, new()
         {
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
             {

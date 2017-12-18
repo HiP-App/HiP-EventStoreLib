@@ -24,7 +24,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="id">Id of the object</param>
         /// <param name="userId">Id of the user</param>
         /// <returns></returns>
-        public static async Task CreateEntity<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
+        public static async Task CreateEntityAsync<T>(EventStoreService service, T obj, ResourceType resourceType, int id, string userId) where T : new()
         {
             if (obj == null)
                 throw new ArgumentException("The object to store cannot be null", nameof(obj));
@@ -32,7 +32,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
             await service.AppendEventAsync(createdEvent);
-            await UpdateEntity(service, emptyObject, obj, resourceType, id, userId);
+            await UpdateEntityAsync(service, emptyObject, obj, resourceType, id, userId);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="id">Id of the entity</param>
         /// <param name="userId">Id of the user</param>
         /// <returns></returns>
-        public static async Task DeleteEntity(EventStoreService service, ResourceType resourceType, int id, string userId)
+        public static async Task DeleteEntityAsync(EventStoreService service, ResourceType resourceType, int id, string userId)
         {
             await service.AppendEventAsync(new DeletedEvent(resourceType.Name, id, userId));
         }
@@ -60,7 +60,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="id">Id of the entity</param>
         /// <param name="userId">Id of the user</param>
         /// <returns></returns>
-        public static async Task UpdateEntity<T>(EventStoreService service, T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        public static async Task UpdateEntityAsync<T>(EventStoreService service, T oldObject, T newObject, ResourceType resourceType, int id, string userId)
         {
             var events = CompareEntities(oldObject, newObject, resourceType, id, userId);
             await service.AppendEventsAsync(events);
