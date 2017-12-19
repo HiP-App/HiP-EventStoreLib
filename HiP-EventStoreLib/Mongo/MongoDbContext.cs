@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         {
             _config = config.Value;
             _logger = logger;
+
+            BsonSerializer.RegisterSerializer(new EntityIdSerializer());
 
             var mongo = new MongoClient(config.Value.MongoDbHost);
 
@@ -89,14 +92,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
             // for each reference (source -> target)...
 
             // 1) create a new DocRef pointing to the target and add it to the source's references list
-            var targetRefs = targets.Select(target => new DocRef<IEntity<int>>(target.Id, target.Type.Name));
-            var update = Builders<IEntity<int>>.Update.PushEach(OutgoingReferencesKey, targetRefs);
+            var update = Builders<IEntity<int>>.Update.PushEach(OutgoingReferencesKey, targets);
             var result = _db.GetCollection<IEntity<int>>(source.Type.Name).UpdateOne(x => x.Id == source.Id, update);
             Debug.Assert(result.ModifiedCount == 1);
 
             // 2) create a new DocRef pointing to the source and add it to the target's referencers list
-            var sourceRef = new DocRef<IEntity<int>>(source.Id, source.Type.Name);
-            var update2 = Builders<IEntity<int>>.Update.Push(IncomingReferencesKey, sourceRef);
+            var update2 = Builders<IEntity<int>>.Update.Push(IncomingReferencesKey, source);
             foreach (var target in targets)
             {
                 result = _db.GetCollection<IEntity<int>>(target.Type.Name).UpdateOne(x => x.Id == target.Id, update2);
@@ -107,24 +108,14 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         public bool RemoveReference(EntityId source, EntityId target)
         {
             // 1) delete the DocRef pointing to the target from the source's references list
-            var update = Builders<dynamic>.Update.PullFilter(
-                OutgoingReferencesKey,
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), target.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", target.Id)));
-
+            var update = Builders<dynamic>.Update.Pull(OutgoingReferencesKey, target);
             var result = _db.GetCollection<dynamic>(source.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", source.Id), update);
 
             Debug.Assert(result.ModifiedCount == 1);
 
             // 2) delete the DocRef pointing to the source from the target's referencers list
-            var update2 = Builders<dynamic>.Update.PullFilter(
-                IncomingReferencesKey,
-                Builders<dynamic>.Filter.And(
-                    Builders<dynamic>.Filter.Eq(nameof(DocRefBase.Collection), source.Type.Name),
-                    Builders<dynamic>.Filter.Eq("_id", source.Id)));
-
+            var update2 = Builders<dynamic>.Update.Pull(IncomingReferencesKey, source);
             var result2 = _db.GetCollection<dynamic>(target.Type.Name).UpdateOne(
                 Builders<dynamic>.Filter.Eq("_id", target.Id), update2);
 

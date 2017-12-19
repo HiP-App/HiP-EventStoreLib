@@ -102,8 +102,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
                 switch (collectionSemantic)
                 {
                     case CollectionSemantic.Bag:
-                    case CollectionSemantic.Set when !list.Contains(value):
                         list.Add(value);
+                        break;
+
+                    case CollectionSemantic.Set:
+                        if (!list.Contains(value))
+                            list.Add(value);
                         break;
 
                     default:

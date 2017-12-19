@@ -8,13 +8,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public struct EntityId : IEquatable<EntityId>
     {
+        public static readonly EntityId None = new EntityId();
+
         public ResourceType Type { get; }
 
         public int Id { get; }
 
         public EntityId(ResourceType type, int id)
         {
-            Type = type;
+            Type = type ?? throw new ArgumentNullException(nameof(type));
             Id = id;
         }
 
