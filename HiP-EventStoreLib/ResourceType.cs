@@ -20,6 +20,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public Type Type { get; private set; }
 
+        /// <summary>
+        /// This property can be used to model inheritance with resource types. This is useful if the <see cref="Type"/> inherits from the <see cref="Type"/> of the <see cref="BaseResourceType"/>.
+        /// </summary>
+        public ResourceType BaseResourceType { get; private set; }
+
         [BsonConstructor]
         [JsonConstructor]
         private ResourceType(string name)
@@ -48,10 +53,16 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
 
-        public static ResourceType Register(string name, Type type)
+        public static ResourceType Register(string name, Type type, ResourceType baseResourceType = null)
         {
             var resourceType = new ResourceType(name);
+
             resourceType.Type = type;
+            if (baseResourceType != null)
+            {
+                if (!baseResourceType.Type.IsAssignableFrom(type)) throw new ArgumentException("The type must be a subclass of the type of the BaseResourceType", nameof(baseResourceType));
+                resourceType.BaseResourceType = baseResourceType;
+            }
             Dictionary.Add(name, resourceType);
             return resourceType;
         }

@@ -19,7 +19,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
             {
                 var targetType = typeof(T);
-                if (!resourceType.Type.Equals(targetType)) throw new ArgumentException("The type parameter doesn't match up with the associated type of the ResourceType");
+                if (!targetType.IsAssignableFrom(resourceType.Type)) throw new ArgumentException("The type parameter doesn't match up with the associated type of the ResourceType");
 
                 var enumerator = stream.GetEnumerator();
                 var obj = default(T);
