@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
+namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
 {
-    public class DummyEventStoreStreamEnumerator : IEventStreamEnumerator
+    public class FakeEventStoreStreamEnumerator : IEventStreamEnumerator
     {
         private readonly IEnumerator<IEvent> _syncEnumerator;
 
-        public DummyEventStoreStreamEnumerator(IEnumerator<IEvent> syncEnumerator)
+        public FakeEventStoreStreamEnumerator(IEnumerator<IEvent> syncEnumerator)
         {
             _syncEnumerator = syncEnumerator;
         }

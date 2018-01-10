@@ -6,11 +6,11 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
-namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
+namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
 {
-    public class DummyEventStream : IEventStream
+    public class FakeEventStream : IEventStream
     {
-        private readonly DummyEventStore _eventStore;
+        private readonly FakeEventStore _eventStore;
         private readonly AsyncLock _mutex = new AsyncLock();
         private readonly List<IEvent> _events = new List<IEvent>();
         private readonly Dictionary<string, object> _metadata = new Dictionary<string, object>();
@@ -21,7 +21,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
         public string Name { get; }
 
-        public DummyEventStream(DummyEventStore eventStore, string name)
+        public FakeEventStream(FakeEventStore eventStore, string name)
         {
             _eventStore = eventStore;
             Name = name;
@@ -76,7 +76,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
         public IEventStreamEnumerator GetEnumerator()
         {
             using (BeginCriticalSectionAsync().Result)
-                return new DummyEventStoreStreamEnumerator(_events.GetEnumerator());
+                return new FakeEventStoreStreamEnumerator(_events.GetEnumerator());
         }
 
         public IEventStreamSubscription SubscribeCatchUp(Action<IEvent> handler)
@@ -85,7 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
                 throw new ArgumentNullException(nameof(handler));
 
             using (BeginCriticalSectionAsync().Result)
-                return new DummyEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event), handler);
+                return new FakeEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event), handler);
         }
 
         public async Task SetMetadataAsync(string key, object value)

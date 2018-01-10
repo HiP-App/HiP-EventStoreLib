@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 
-namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
+namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
 {
     /// <summary>
     /// A simple in-memory "event store" for testing purposes.
     /// </summary>
-    public class DummyEventStore : IEventStore, IEventStreamCollection
+    public class FakeEventStore : IEventStore, IEventStreamCollection
     {
-        private readonly Dictionary<string, DummyEventStream> _streams = new Dictionary<string, DummyEventStream>();
+        private readonly Dictionary<string, FakeEventStream> _streams = new Dictionary<string, FakeEventStream>();
 
         public IEventStreamCollection Streams => this;
 
@@ -15,12 +15,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
 
         internal void DeleteStream(string name) => _streams.Remove(name);
 
-        private DummyEventStream GetOrCreateStream(string name)
+        private FakeEventStream GetOrCreateStream(string name)
         {
             if (_streams.TryGetValue(name, out var stream))
                 return stream;
 
-            var newStream = new DummyEventStream(this, name);
+            var newStream = new FakeEventStream(this, name);
             _streams[name] = newStream;
             return newStream;
         }
