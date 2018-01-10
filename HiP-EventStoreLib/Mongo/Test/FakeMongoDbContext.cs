@@ -111,7 +111,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
                     $"('{newEntity.Id}') do not match", nameof(newEntity));
             }
 
-            if (_entities.TryGetValue(entity, out var original))
+            if (_entities.ContainsKey(entity))
             {
                 _entities[entity] = newEntity;
                 return true;

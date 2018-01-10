@@ -19,13 +19,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
     public class MongoDbContext : IMongoDbContext
     {
         private readonly MongoDbConfig _config;
-        private readonly ILogger<MongoDbContext> _logger;
         private readonly IMongoDatabase _db;
 
         public MongoDbContext(IOptions<MongoDbConfig> config, ILogger<MongoDbContext> logger)
         {
             _config = config.Value;
-            _logger = logger;
 
             BsonSerializer.RegisterSerializer(new EntityIdSerializer());
 

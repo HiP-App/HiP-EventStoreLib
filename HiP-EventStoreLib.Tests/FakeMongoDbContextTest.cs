@@ -16,7 +16,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
         public void TestCrud()
         {
             var tFoo = ResourceType.Register("Foo", null);
-            var tBar = ResourceType.Register("Bar", null);
+            ResourceType.Register("Bar", null);
 
             var db = new FakeMongoDbContext();
 
@@ -35,19 +35,19 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
             Assert.Same(foo4, db.Get<Foo>((tFoo, 4)));
 
             // Replacing an entity with another one having a different ID should throw an exception
-            var foo3b = new Foo { Id = 33 };
+            var foo3B = new Foo { Id = 33 };
 
             Assert.Throws<ArgumentException>(() =>
-                db.Replace((tFoo, 3), foo3b));
+                db.Replace((tFoo, 3), foo3B));
 
             Assert.Null(db.Get<Foo>((tFoo, 33)));
 
             // Replacing an entity with another one having the same ID should work
-            foo3b.Id = 3;
-            db.Replace((tFoo, 3), foo3b);
+            foo3B.Id = 3;
+            db.Replace((tFoo, 3), foo3B);
 
-            Assert.Same(foo3b, db.Get<Foo>((tFoo, 3)));
-            Assert.Same(foo3b, db.Get<Foo>((tFoo, 3)));
+            Assert.Same(foo3B, db.Get<Foo>((tFoo, 3)));
+            Assert.Same(foo3B, db.Get<Foo>((tFoo, 3)));
 
             // Updating entities should work correctly
             db.Update<Foo>((tFoo, 4), up =>
@@ -60,9 +60,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
                 up.Remove(foo => foo.Bars, 4);
             });
 
-            var foo4updated = db.Get<Foo>((tFoo, 4));
-            Assert.Equal("Test2", foo4updated.Name);
-            Assert.Equal(new[] { 3, 1, 2, 5 }, foo4updated.Bars);
+            var foo4Updated = db.Get<Foo>((tFoo, 4));
+            Assert.Equal("Test2", foo4Updated.Name);
+            Assert.Equal(new[] { 3, 1, 2, 5 }, foo4Updated.Bars);
 
             // Removing entities should work correctly
             Assert.False(db.Delete((tFoo, 33)));

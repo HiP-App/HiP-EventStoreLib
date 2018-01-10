@@ -1,10 +1,8 @@
-﻿using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
