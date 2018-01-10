@@ -12,7 +12,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// This class is the "glue" between different representations of the same entities.
     /// For example, consider an exhibit in DataStore: There's a class 'Exhibit' defining which information
     /// of an exhibit is stored in the Mongo database for caching purposes. There's also a class 'ExhibitArgs'
-    /// defining the properties posted to the REST API. There may be further REST-re classes such as
+    /// defining the properties posted to the REST API. There may be further REST-related classes such as
     /// 'ExhibitUpdateArgs' for cases where the POST- and PUT-methods expect different parameters.
     /// However, all these different representations of an exhibit are "connected" to the same ResourceType.
     /// </remarks>
