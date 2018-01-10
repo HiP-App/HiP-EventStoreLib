@@ -5,6 +5,17 @@ using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// This class is the "glue" between different representations of the same entities.
+    /// For example, consider an exhibit in DataStore: There's a class 'Exhibit' defining which information
+    /// of an exhibit is stored in the Mongo database for caching purposes. There's also a class 'ExhibitArgs'
+    /// defining the properties posted to the REST API. There may be further REST-re classes such as
+    /// 'ExhibitUpdateArgs' for cases where the POST- and PUT-methods expect different parameters.
+    /// However, all these different representations of an exhibit are "connected" to the same ResourceType.
+    /// </remarks>
     public class ResourceType : IEquatable<ResourceType>
     {
         private static readonly Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
@@ -17,6 +28,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         [BsonElement]
         public string Name { get; }
 
+        /// <summary>
+        /// Refers to the class that describes the core properties of an entity.
+        /// In many cases, this is the '*Args'-class that is also used for REST requests.
+        /// </summary>
         public Type Type { get; private set; }
 
         [BsonConstructor]

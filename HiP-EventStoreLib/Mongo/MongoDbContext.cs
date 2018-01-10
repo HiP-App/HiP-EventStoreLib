@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -44,6 +45,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
 
         public T Get<T>(EntityId entity) where T : IEntity<int> =>
             GetCollection<T>(entity.Type).FirstOrDefault(x => x.Id == entity.Id);
+
+        public IReadOnlyList<T> GetMany<T>(ResourceType resourceType, IEnumerable<int> ids) where T: IEntity<int>
+        {
+            var idSet = ids.ToImmutableHashSet();
+            return GetCollection<T>(resourceType).Where(x => idSet.Contains(x.Id)).ToImmutableList();
+        }
 
         public void Add<T>(ResourceType resourceType, T entity) where T : IEntity<int>
         {

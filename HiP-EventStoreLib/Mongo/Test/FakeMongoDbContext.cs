@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
@@ -13,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
     /// </remarks>
     public class FakeMongoDbContext : IMongoDbContext
     {
-        private readonly Dictionary<EntityId, object> _entities = new Dictionary<EntityId, object>();
+        private readonly Dictionary<EntityId, IEntity<int>> _entities = new Dictionary<EntityId, IEntity<int>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _incomingRefs = new Dictionary<EntityId, HashSet<EntityId>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _outgoingRefs = new Dictionary<EntityId, HashSet<EntityId>>();
 
@@ -73,6 +74,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
         public T Get<T>(EntityId entity) where T : IEntity<int>
         {
             return _entities.TryGetValue(entity, out var o) ? (T)o : default(T);
+        }
+
+        public IReadOnlyList<T> GetMany<T>(ResourceType resourceType, IEnumerable<int> ids) where T : IEntity<int>
+        {
+            var idSet = ids.ToImmutableHashSet();
+            return GetCollection<T>(resourceType).Where(x => idSet.Contains(x.Id)).ToImmutableList();
         }
 
         public IQueryable<T> GetCollection<T>(ResourceType resourceType) where T : IEntity<int>

@@ -20,6 +20,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
         T Get<T>(EntityId entity) where T : IEntity<int>;
 
         /// <summary>
+        /// Retrieves the entities with the specified IDs from the database.
+        /// IDs for which no entity exists are ignored, so the number of returned entities may be
+        /// smaller than the number of specified IDs.
+        /// </summary>
+        IReadOnlyList<T> GetMany<T>(ResourceType resourceType, IEnumerable<int> ids) where T : IEntity<int>;
+
+        /// <summary>
         /// Inserts an entity with the specified ID into the database.
         /// Throws an exception if an entity of the same ID already exists.
         /// </summary>
