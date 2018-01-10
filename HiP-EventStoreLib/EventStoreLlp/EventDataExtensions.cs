@@ -71,7 +71,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 var propertyName = headers[nameof(PropertyChangedEvent.PropertyName)].ToString();
                 var resourceTypeName = headers[nameof(PropertyChangedEvent.ResourceTypeName)].ToString();
                 var id = (int)(long)headers[nameof(PropertyChangedEvent.Id)];
-                var userId = headers[nameof(PropertyChangedEvent.UserId)].ToString();
+                var userId = headers[nameof(PropertyChangedEvent.UserId)]?.ToString();
                 var valueType = FindType(valueTypeName);
                 object value = null;
                 if (valueType != null)
