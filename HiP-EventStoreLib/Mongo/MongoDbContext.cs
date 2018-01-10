@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
     /// Provides read/write access to a Mongo database.
     /// 
     /// Can be used with ASP.NET Core dependency injection (requires
-    /// <see cref="MongoDbConfig"/> options and an <see cref="ILogger"/>.
+    /// <see cref="MongoDbConfig"/> options and an <see cref="ILogger"/>).
     /// </summary>
     public class MongoDbContext : IMongoDbContext
     {

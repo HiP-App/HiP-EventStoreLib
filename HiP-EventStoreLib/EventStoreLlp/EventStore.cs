@@ -1,13 +1,20 @@
-﻿using System.Collections.Generic;
-using EventStore.ClientAPI;
-using System.Threading.Tasks;
-using Nito.AsyncEx;
+﻿using EventStore.ClientAPI;
 using Microsoft.Extensions.Options;
+using Nito.AsyncEx;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
 {
+    /// <summary>
+    /// Provides read/write access to a running instance of Event Store
+    /// by Event Store LLP (see https://eventstore.org/).
+    /// 
+    /// Can be used with ASP.NET Core dependency injection (requires
+    /// <see cref="EventStoreConfig"/> options).
+    /// </summary>
     public class EventStore : IEventStore, IEventStreamCollection
     {
         private readonly Dictionary<string, IEventStream> _streamWrappers = new Dictionary<string, IEventStream>();
