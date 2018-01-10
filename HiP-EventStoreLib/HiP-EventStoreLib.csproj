@@ -5,7 +5,7 @@
     <RootNamespace>PaderbornUniversity.SILab.Hip.EventSourcing</RootNamespace>
     <NoWarn>1701;1702;1705;1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
     <Description>Provides core functionality for implementing the event sourcing and CQRS patterns.</Description>
     <PackageLicenseUrl>https://github.com/HiP-App/HiP-EventStoreLib/blob/master/LICENSE</PackageLicenseUrl>
