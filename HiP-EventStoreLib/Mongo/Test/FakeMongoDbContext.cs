@@ -14,6 +14,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
     /// </remarks>
     public class FakeMongoDbContext : IMongoDbContext
     {
+        public static readonly FakeMongoDbContext Instance = new FakeMongoDbContext();
+
         private readonly Dictionary<EntityId, IEntity<int>> _entities = new Dictionary<EntityId, IEntity<int>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _incomingRefs = new Dictionary<EntityId, HashSet<EntityId>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _outgoingRefs = new Dictionary<EntityId, HashSet<EntityId>>();

@@ -11,13 +11,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
     public class FakeEventStream : IEventStream
     {
         private readonly FakeEventStore _eventStore;
-        private readonly AsyncLock _mutex = new AsyncLock();
         private readonly List<IEvent> _events = new List<IEvent>();
+        private readonly AsyncLock _mutex = new AsyncLock();
         private readonly Dictionary<string, object> _metadata = new Dictionary<string, object>();
         private readonly Subject<EventAppendedArgs> _appended = new Subject<EventAppendedArgs>();
         private bool _isDeleted;
 
         public IObservable<EventAppendedArgs> Appended => _appended;
+
+        public IReadOnlyList<IEvent> Events => _events; // direct access to the events for testing purposes
 
         public string Name { get; }
 
@@ -67,7 +69,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
             using (await BeginCriticalSectionAsync())
             {
                 _isDeleted = true;
-                _eventStore.DeleteStream(Name);
+                _eventStore.Streams.Delete(Name);
                 _appended.OnCompleted();
                 _appended.Dispose();
             }
