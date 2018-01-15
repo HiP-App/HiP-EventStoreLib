@@ -67,9 +67,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
             }
         }
 
-        public ResourceType GetEntityType()
-        {
-            return ResourceType.ResourceTypeDictionary[ResourceTypeName];
-        }
+        public ResourceType GetEntityType() => ResourceType.Parse(ResourceTypeName);
     }
 }

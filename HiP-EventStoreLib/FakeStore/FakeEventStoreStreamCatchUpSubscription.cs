@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
+namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
 {
-    public class DummyEventStoreStreamCatchUpSubscription : IEventStreamSubscription
+    public class FakeEventStoreStreamCatchUpSubscription : IEventStreamSubscription
     {
         private readonly IDisposable _futureEventSubscription;
 
@@ -13,10 +13,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
         /// <summary>
         /// Creates a new catch-up subscription.
         /// </summary>
-        /// <param name="existingEvents">All events currently stored in the dummy event store</param>
+        /// <param name="existingEvents">All events currently stored in the fake event store</param>
         /// <param name="futureEvents">An observable of events that are appended in the future</param>
         /// <param name="handler">The event handler</param>
-        public DummyEventStoreStreamCatchUpSubscription(IEnumerable<IEvent> existingEvents, IObservable<IEvent> futureEvents, Action<IEvent> handler)
+        public FakeEventStoreStreamCatchUpSubscription(IEnumerable<IEvent> existingEvents, IObservable<IEvent> futureEvents, Action<IEvent> handler)
         {
             foreach (var ev in existingEvents)
                 handler?.Invoke(ev.MigrateToLatestVersion());

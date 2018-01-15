@@ -82,8 +82,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (oldObject == null || newObject == null)
                 throw new ArgumentNullException("None of the objects to compare can be null");
 
-            if (resourceType == null || !ResourceType.ResourceTypeDictionary.ContainsKey(resourceType.Name))
-                throw new ArgumentException("A valid ResourceType has to be provided", nameof(resourceType));
+            if (resourceType == null)
+                throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
 
             var properties = typeof(T).GetProperties().Where(p => p.CanRead);
             foreach (var prop in properties)

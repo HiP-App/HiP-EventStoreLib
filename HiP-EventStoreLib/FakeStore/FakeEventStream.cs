@@ -6,22 +6,24 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
-namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
+namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
 {
-    public class DummyEventStream : IEventStream
+    public class FakeEventStream : IEventStream
     {
-        private readonly DummyEventStore _eventStore;
-        private readonly AsyncLock _mutex = new AsyncLock();
+        private readonly FakeEventStore _eventStore;
         private readonly List<IEvent> _events = new List<IEvent>();
+        private readonly AsyncLock _mutex = new AsyncLock();
         private readonly Dictionary<string, object> _metadata = new Dictionary<string, object>();
         private readonly Subject<EventAppendedArgs> _appended = new Subject<EventAppendedArgs>();
         private bool _isDeleted;
 
         public IObservable<EventAppendedArgs> Appended => _appended;
 
+        public IReadOnlyList<IEvent> Events => _events; // direct access to the events for testing purposes
+
         public string Name { get; }
 
-        public DummyEventStream(DummyEventStore eventStore, string name)
+        public FakeEventStream(FakeEventStore eventStore, string name)
         {
             _eventStore = eventStore;
             Name = name;
@@ -67,7 +69,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
             using (await BeginCriticalSectionAsync())
             {
                 _isDeleted = true;
-                _eventStore.DeleteStream(Name);
+                _eventStore.Streams.Delete(Name);
                 _appended.OnCompleted();
                 _appended.Dispose();
             }
@@ -76,7 +78,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
         public IEventStreamEnumerator GetEnumerator()
         {
             using (BeginCriticalSectionAsync().Result)
-                return new DummyEventStoreStreamEnumerator(_events.GetEnumerator());
+                return new FakeEventStoreStreamEnumerator(_events.GetEnumerator());
         }
 
         public IEventStreamSubscription SubscribeCatchUp(Action<IEvent> handler)
@@ -85,7 +87,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.DummyStore
                 throw new ArgumentNullException(nameof(handler));
 
             using (BeginCriticalSectionAsync().Result)
-                return new DummyEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event), handler);
+                return new FakeEventStoreStreamCatchUpSubscription(_events, _appended.Select(e => e.Event), handler);
         }
 
         public async Task SetMetadataAsync(string key, object value)

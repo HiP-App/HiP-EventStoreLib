@@ -1,10 +1,8 @@
-﻿using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PaderbornUniversity.SILab.Hip.EventSourcing.Migrations;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -32,39 +30,22 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
         public IEventStream EventStream => _store.Streams[_streamName];
 
         public EventStoreService(
+            IEventStore eventStore,
             InMemoryCache cache,
             IOptions<EventStoreConfig> config,
             ILogger<EventStoreService> logger)
         {
-            _logger = logger;
-            _streamName = config.Value.Stream;
-
-            var settings = ConnectionSettings.Create()
-                .EnableVerboseLogging()
-                .Build();
-
             // Validate config
-            if (string.IsNullOrWhiteSpace(config.Value.Host))
-                throw new ArgumentException($"Invalid configuration: Missing value for '{nameof(config.Value.Host)}'");
-
             if (string.IsNullOrWhiteSpace(config.Value.Stream))
                 throw new ArgumentException($"Invalid configuration: Missing value for '{nameof(config.Value.Stream)}'");
 
-            // Prevent accidentally working with a production database
-            if (Debugger.IsAttached)
-            {
-                Debug.Assert(config.Value.Host.Contains("localhost"),
-                    "It looks like you are trying to connect to a production Event Store database. Are you sure you wish to continue?");
-            }
+            _store = eventStore;
+            _cache = cache;
+            _streamName = config.Value.Stream;
+            _logger = logger;
 
-            // Establish connection to Event Store
-            var uri = new Uri(config.Value.Host);
-            var connection = EventStoreConnection.Create(settings, uri);
-            connection.ConnectAsync().Wait();
-
-            _store = new EventStore(connection);
-
-            logger.LogInformation($"Connected to Event Store on '{uri.Host}', using stream '{_streamName}'");
+            var host = Uri.TryCreate(config.Value.Host, UriKind.Absolute, out var s) ? s.Host : "";
+            logger.LogInformation($"Connected to Event Store on '{host}', using stream '{_streamName}'");
 
             // Update stream to the latest version
             var mainAssembly = Assembly.GetEntryAssembly();
@@ -73,7 +54,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp
                 logger.LogInformation($"Migrated stream '{_streamName}' from version '{migrationResult.fromVersion}' to version '{migrationResult.toVersion}'");
 
             // Setup IDomainIndex-indices
-            _cache = cache;
             PopulateIndicesAsync().Wait();
         }
 

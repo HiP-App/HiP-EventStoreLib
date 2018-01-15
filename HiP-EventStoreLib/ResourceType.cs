@@ -5,10 +5,20 @@ using System.Collections.Generic;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// This class is the "glue" between different representations of the same entities.
+    /// For example, consider an exhibit in DataStore: There's a class 'Exhibit' defining which information
+    /// of an exhibit is stored in the Mongo database for caching purposes. There's also a class 'ExhibitArgs'
+    /// defining the properties posted to the REST API. There may be further REST-related classes such as
+    /// 'ExhibitUpdateArgs' for cases where the POST- and PUT-methods expect different parameters.
+    /// However, all these different representations of an exhibit are "connected" to the same ResourceType.
+    /// </remarks>
     public class ResourceType : IEquatable<ResourceType>
     {
         private static readonly Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
-        public static IReadOnlyDictionary<string, ResourceType> ResourceTypeDictionary => Dictionary;
 
         /// <summary>
         /// This name is used in two ways:
@@ -18,6 +28,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         [BsonElement]
         public string Name { get; }
 
+        /// <summary>
+        /// Refers to the class that describes the core properties of an entity.
+        /// In many cases, this is the '*Args'-class that is also used for REST requests.
+        /// </summary>
         public Type Type { get; private set; }
 
         /// <summary>
@@ -66,5 +80,30 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             Dictionary.Add(name, resourceType);
             return resourceType;
         }
+
+        /// <summary>
+        /// Converts the specified name to one of the registered resource types.
+        /// Throws if no resource type with that name is registered.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"/>
+        /// <exception cref="FormatException"/>
+        public static ResourceType Parse(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            if (Dictionary.TryGetValue(name, out var type))
+                return type;
+
+            throw new FormatException($"No {nameof(ResourceType)} with name '{name}' is registered");
+        }
+
+        /// <summary>
+        /// Tries to convert the specified name to one of the registered resource types.
+        /// Returns false if no resource type with that name is registered.
+        /// </summary>
+        /// <exception cref="ArgumentNullException"/>
+        public static bool TryParse(string name, out ResourceType type) =>
+            Dictionary.TryGetValue(name, out type);
     }
 }
