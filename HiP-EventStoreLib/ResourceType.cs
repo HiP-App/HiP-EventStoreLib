@@ -35,7 +35,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         public Type Type { get; private set; }
 
         /// <summary>
-        /// This property can be used to model inheritance with resource types. This is useful if the <see cref="Type"/> inherits from the <see cref="Type"/> of the <see cref="BaseResourceType"/>.
+        /// This property can be used to model inheritance with resource types.
+        /// This is useful if the <see cref="Type"/> inherits from the <see cref="Type"/>
+        /// of the <see cref="BaseResourceType"/>.
         /// </summary>
         public ResourceType BaseResourceType { get; private set; }
 
@@ -67,17 +69,23 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public static bool operator !=(ResourceType a, ResourceType b) => !(a == b);
 
+        /// <remarks>
+        /// Registering the same resource type multiple times is intentionally allowed
+        /// to better support testing scenarios.
+        /// </remarks>
+        /// <returns>The newly registered resource type</returns>
         public static ResourceType Register(string name, Type type, ResourceType baseResourceType = null)
         {
-            var resourceType = new ResourceType(name);
+            if (baseResourceType != null && !baseResourceType.Type.IsAssignableFrom(type))
+                throw new ArgumentException("The type must be a subclass of the type of the BaseResourceType", nameof(baseResourceType));
 
-            resourceType.Type = type;
-            if (baseResourceType != null)
+            var resourceType = new ResourceType(name)
             {
-                if (!baseResourceType.Type.IsAssignableFrom(type)) throw new ArgumentException("The type must be a subclass of the type of the BaseResourceType", nameof(baseResourceType));
-                resourceType.BaseResourceType = baseResourceType;
-            }
-            Dictionary.Add(name, resourceType);
+                Type = type,
+                BaseResourceType = baseResourceType
+            };
+
+            Dictionary[name] = resourceType;
             return resourceType;
         }
 
