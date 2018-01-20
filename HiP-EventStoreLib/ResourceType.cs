@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
@@ -18,7 +18,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </remarks>
     public class ResourceType : IEquatable<ResourceType>
     {
-        private static readonly Dictionary<string, ResourceType> Dictionary = new Dictionary<string, ResourceType>();
+        private static readonly ConcurrentDictionary<string, ResourceType> Dictionary = 
+            new ConcurrentDictionary<string, ResourceType>();
 
         /// <summary>
         /// This name is used in two ways:
