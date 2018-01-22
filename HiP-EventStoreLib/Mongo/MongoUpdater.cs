@@ -7,7 +7,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo
 {
     public class MongoUpdater<T> : IMongoUpdater<T>
     {
-        public UpdateDefinition<T> Update { get; private set; } = "";
+        public UpdateDefinition<T> Update { get; private set; } = "{}";
 
         public void Add<TField>(Expression<Func<T, IEnumerable<TField>>> field, TField value, CollectionSemantic semantic = CollectionSemantic.Bag)
         {
