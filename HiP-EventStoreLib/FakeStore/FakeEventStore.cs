@@ -8,24 +8,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore
     /// </summary>
     public class FakeEventStore : IEventStore
     {
-        /// <summary>
-        /// Gets the latest instance of <see cref="FakeEventStore"/>.
-        /// </summary>
-        public static FakeEventStore Current { get; private set; }
-
         public FakeEventStreamCollection Streams { get; }
 
         IEventStreamCollection IEventStore.Streams => Streams;
 
-        /// <summary>
-        /// Initializes a new <see cref="FakeEventStore"/> and sets it as the
-        /// current instance (see <see cref="Current"/>).
-        /// </summary>
-        public FakeEventStore()
-        {
-            Current = this;
-            Streams = new FakeEventStreamCollection(this);
-        }
+        public FakeEventStore() => Streams = new FakeEventStreamCollection(this);
     }
 
     public class FakeEventStreamCollection : IEventStreamCollection

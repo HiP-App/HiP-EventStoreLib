@@ -14,23 +14,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Mongo.Test
     /// </remarks>
     public class FakeMongoDbContext : IMongoDbContext
     {
-        /// <summary>
-        /// Gets the latest instance of <see cref="FakeMongoDbContext"/>.
-        /// </summary>
-        public static FakeMongoDbContext Current { get; private set; }
-
         private readonly Dictionary<EntityId, IEntity<int>> _entities = new Dictionary<EntityId, IEntity<int>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _incomingRefs = new Dictionary<EntityId, HashSet<EntityId>>();
         private readonly Dictionary<EntityId, HashSet<EntityId>> _outgoingRefs = new Dictionary<EntityId, HashSet<EntityId>>();
-
-        /// <summary>
-        /// Initializes a new <see cref="FakeMongoDbContext"/> and sets it as the
-        /// current instance (see <see cref="Current"/>).
-        /// </summary>
-        public FakeMongoDbContext()
-        {
-            Current = this;
-        }
 
         private HashSet<EntityId> IncomingRefs(EntityId id) =>
             _incomingRefs.TryGetValue(id, out var list)
