@@ -4,7 +4,6 @@ using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
 using PaderbornUniversity.SILab.Hip.EventSourcing.FakeStore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
@@ -39,7 +38,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
             await EntityManager.UpdateEntityAsync(_service, testObject1, testObject2, resourceType, id, userId);
             var entity = await _service.EventStream.GetCurrentEntityAsync<TestObject>(resourceType, id);
 
-            Assert.Equal<TestObject>(testObject2, entity);
+            Assert.Equal(testObject2, entity);
 
             testObject1.Object = testObject2;
 

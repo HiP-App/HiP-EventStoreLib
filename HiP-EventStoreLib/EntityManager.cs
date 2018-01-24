@@ -130,7 +130,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                         var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
-                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new object[] { oldValue, newValue, resourceType, id, userId, BuildPath(path, prop.Name), ++recursionDepth });
+                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(path, prop.Name), ++recursionDepth });
 
                         foreach (var e in events)
                         {
