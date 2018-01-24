@@ -68,7 +68,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         /// <summary>
         /// Compares two entites to each other and returns an enumerable of <see cref="PropertyChangedEvent"/>.
-        /// The comparison is based on the readable public properties of type <typeparamref name="T"/>. 
+        /// The comparison is based on the readable public properties of type <typeparamref name="T"/>.
+        /// If a property has a <see cref="NestedObjectAttribute"/> the properties of these object will be compared recursively
         /// </summary>
         /// <typeparam name="T">Type of both entities</typeparam>
         /// <param name="oldObject">Old entity</param>
@@ -144,11 +145,19 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             }
         }
 
-        public static bool HasEmptyConstructor(this Type t)
+        /// <summary>
+        /// Checks if <paramref name="type"/> has an empty constructor
+        /// </summary>
+        /// <returns></returns>
+        public static bool HasEmptyConstructor(Type type)
         {
-            return t.IsValueType || t.GetConstructor(Type.EmptyTypes) != null;
+            return type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null;
         }
 
+        /// <summary>
+        /// Builds the property path which is used for the property name
+        /// </summary>
+        /// <returns></returns>
         private static string BuildPath(string path, string propertyName) => string.IsNullOrEmpty(path) ? propertyName : $"{path}.{propertyName}";
 
     }
