@@ -125,8 +125,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     else
                     {
                         var t = newValue.GetType();
-                        if (!HasEmptyConstructor(t)) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
-                        oldValue = Activator.CreateInstance(t);
+                        if (!t.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                        oldValue = Activator.CreateInstance(t, true);
 
                         var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
@@ -149,7 +149,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// Checks if <paramref name="type"/> has an empty constructor
         /// </summary>
         /// <returns></returns>
-        public static bool HasEmptyConstructor(Type type)
+        public static bool HasEmptyConstructor(this Type type)
         {
             return type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null;
         }

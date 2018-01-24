@@ -26,7 +26,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
                     if (nestedObject == null)
                     {
                         //we need to create a new instance
-                        var newObject = Activator.CreateInstance(type);
+                        if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                        var newObject = Activator.CreateInstance(type, true);
                         property.SetValue(currentObj, newObject);
                         nestedObject = newObject;
                     }
