@@ -50,7 +50,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         /// <summary>
         /// Updates an entity by appending <see cref="PropertyChangedEvent"/>s to the event stream.
-        /// Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string)"/> to compare the entities.
+        /// Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string,string, int)"/> to compare the entities.
         /// </summary>
         /// <typeparam name="T">Type of the entitiy</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -76,8 +76,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="resourceType">Resource type</param>
         /// <param name="id">Id of the entity</param>
         /// <param name="userId">Id of the user</param>
+        /// <param name="path">Property path</param>
+        /// <param name="recursionDepth">Depth of the recursion</param>
         /// <returns>Enumerable of <see cref="PropertyChangedEvent"/>s</returns>
-        public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string path = "", int recursionDepth = 1)
         {
             if (oldObject == null || newObject == null)
                 throw new ArgumentNullException("None of the objects to compare can be null");
@@ -98,7 +100,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                 if (type == typeof(string) && !Equals(oldValue, newValue))
                 {
-                    yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
+                    yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
                 }
                 else if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
@@ -107,14 +109,47 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                     if (oldList == null || newList == null || !oldList.SequenceEqual(newList))
                     {
-                        yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
+                        yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
+                    }
+                }
+                else if (prop.CustomAttributes.Any(d => d.AttributeType.Equals(typeof(NestedObjectAttribute))))
+                {
+                    if (recursionDepth >= 50) throw new InvalidOperationException("The NestedObject graph seems to contain a cycle");
+
+                    if (newValue == null)
+                    {
+                        //the nested object has been set to null
+                        yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
+                    }
+                    else
+                    {
+                        var t = newValue.GetType();
+                        if (!HasEmptyConstructor(t)) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                        oldValue = Activator.CreateInstance(t);
+
+                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
+                        var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
+                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new object[] { oldValue, newValue, resourceType, id, userId, BuildPath(path, prop.Name), ++recursionDepth });
+
+                        foreach (var e in events)
+                        {
+                            yield return e;
+                        }
                     }
                 }
                 else if (!Equals(oldValue, newValue))
                 {
-                    yield return new PropertyChangedEvent(prop.Name, resourceType.Name, id, userId, newValue);
+                    yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
                 }
             }
         }
+
+        public static bool HasEmptyConstructor(this Type t)
+        {
+            return t.IsValueType || t.GetConstructor(Type.EmptyTypes) != null;
+        }
+
+        private static string BuildPath(string path, string propertyName) => string.IsNullOrEmpty(path) ? propertyName : $"{path}.{propertyName}";
+
     }
 }
