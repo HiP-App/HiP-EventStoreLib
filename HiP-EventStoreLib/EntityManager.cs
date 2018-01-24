@@ -124,9 +124,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     }
                     else
                     {
-                        var t = newValue.GetType();
-                        if (!t.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
-                        oldValue = Activator.CreateInstance(t, true);
+                        if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                        oldValue = Activator.CreateInstance(type, true);
 
                         var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
