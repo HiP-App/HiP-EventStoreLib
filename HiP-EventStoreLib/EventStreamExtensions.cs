@@ -34,8 +34,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     case PropertyChangedEvent propertyEv:
                         if (!Equals(obj, default(T)) && Equals(propertyEv.ResourceTypeName, resourceType.Name) && propertyEv.Id == id)
                         {
-                            var propertyInfo = targetType.GetProperty(propertyEv.PropertyName);
-                            propertyInfo.SetValue(obj, propertyEv.Value);
+                            propertyEv.ApplyTo(obj);
                         }
                         break;
 
