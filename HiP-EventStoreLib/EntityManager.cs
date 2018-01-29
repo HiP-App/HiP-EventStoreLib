@@ -99,12 +99,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 // both values are null
                 if (type == null) continue;
 
-                if (type == typeof(string) && !Equals(oldValue, newValue))
+                if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
-                    yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
-                }
-                else if (typeof(IEnumerable).IsAssignableFrom(type))
-                {
+                    //this also holds for strings
                     var oldList = ((IEnumerable)oldValue)?.Cast<object>();
                     var newList = ((IEnumerable)newValue)?.Cast<object>();
 
@@ -124,8 +121,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     }
                     else
                     {
-                        if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
-                        oldValue = Activator.CreateInstance(type, true);
+                        if (oldValue == null)
+                        {
+                            if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                            oldValue = Activator.CreateInstance(type, true);
+                        }
 
                         var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
