@@ -5,7 +5,7 @@
     <RootNamespace>PaderbornUniversity.SILab.Hip.EventSourcing</RootNamespace>
     <NoWarn>1701;1702;1705;1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>4.1.1</Version>
+    <Version>4.1.2</Version>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
     <Description>Provides core functionality for implementing the event sourcing and CQRS patterns.</Description>
     <PackageLicenseUrl>https://github.com/HiP-App/HiP-EventStoreLib/blob/master/LICENSE</PackageLicenseUrl>
@@ -14,11 +14,11 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.2-rc" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.1.0.23" />
     <PackageReference Include="GitLink" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.0.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.4.4" />
+    <PackageReference Include="MongoDB.Driver" Version="2.5.0" />
     <PackageReference Include="Nito.AsyncEx" Version="5.0.0-pre-05" />
     <PackageReference Include="System.Reactive.Core" Version="3.1.1" />
     <PackageReference Include="System.Reactive.Linq" Version="3.1.1" />
