@@ -85,7 +85,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             return CompareEntitiesInternal(oldObject, newObject, resourceType, id, userId, "", 1);
         }
 
-        public static IEnumerable<PropertyChangedEvent> CompareEntitiesInternal<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string propertyPath, int recursionDepth, bool entityCreated = false)
+        private static IEnumerable<PropertyChangedEvent> CompareEntitiesInternal<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string propertyPath, int recursionDepth, bool entityCreated = false)
         {
             if (oldObject == null || newObject == null)
                 throw new ArgumentNullException("None of the objects to compare can be null");
