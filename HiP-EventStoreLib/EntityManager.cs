@@ -32,7 +32,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             var emptyObject = Activator.CreateInstance<T>();
             var createdEvent = new CreatedEvent(resourceType.Name, id, userId);
             await service.AppendEventAsync(createdEvent);
-            await UpdateEntityAsync(service, emptyObject, obj, resourceType, id, userId);
+            var events = CompareEntitiesInternal(emptyObject, obj, resourceType, id, userId, "", 1, true);
+            await service.AppendEventsAsync(events);
         }
 
         /// <summary>
@@ -50,7 +51,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         /// <summary>
         /// Updates an entity by appending <see cref="PropertyChangedEvent"/>s to the event stream.
-        /// Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string,string, int)"/> to compare the entities.
+        /// Uses <see cref="CompareEntities{T}(T, T, ResourceType, int, string)"/> to compare the entities.
         /// </summary>
         /// <typeparam name="T">Type of the entitiy</typeparam>
         /// <param name="service">EventStoreService</param>
@@ -76,11 +77,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
         /// <param name="newObject">New entity</param>
         /// <param name="resourceType">Resource type</param>
         /// <param name="id">Id of the entity</param>
-        /// <param name="userId">Id of the user</param>
-        /// <param name="path">Property path</param>
-        /// <param name="recursionDepth">Depth of the recursion</param>
+        /// <param name="userId">Id of the user</param>        
         /// <returns>Enumerable of <see cref="PropertyChangedEvent"/>s</returns>
-        public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string path = "", int recursionDepth = 1)
+
+        public static IEnumerable<PropertyChangedEvent> CompareEntities<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId)
+        {
+            return CompareEntitiesInternal(oldObject, newObject, resourceType, id, userId, "", 1);
+        }
+
+        private static IEnumerable<PropertyChangedEvent> CompareEntitiesInternal<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string propertyPath, int recursionDepth, bool entityCreated = false)
         {
             if (oldObject == null || newObject == null)
                 throw new ArgumentNullException("None of the objects to compare can be null");
@@ -107,7 +112,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
                     if (oldList == null || newList == null || !oldList.SequenceEqual(newList))
                     {
-                        yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
+                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
                     }
                 }
                 else if (prop.CustomAttributes.Any(d => d.AttributeType.Equals(typeof(NestedObjectAttribute))))
@@ -117,7 +122,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                     if (newValue == null)
                     {
                         //the nested object has been set to null
-                        yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
+                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
                     }
                     else
                     {
@@ -127,9 +132,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                             oldValue = Activator.CreateInstance(type, true);
                         }
 
-                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntities));
+                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
-                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(path, prop.Name), ++recursionDepth });
+                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
 
                         foreach (var e in events)
                         {
@@ -137,9 +142,13 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                         }
                     }
                 }
+                else if (entityCreated && type.IsValueType)
+                {
+                    yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
+                }
                 else if (!Equals(oldValue, newValue))
                 {
-                    yield return new PropertyChangedEvent(BuildPath(path, prop.Name), resourceType.Name, id, userId, newValue);
+                    yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
                 }
             }
         }

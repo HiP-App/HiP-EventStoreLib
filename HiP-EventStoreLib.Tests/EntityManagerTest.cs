@@ -27,8 +27,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
         public async void Test()
         {
             var resourceType = ResourceType.Register("TestObject", typeof(TestObject));
-            var testObject1 = new TestObject { Name = "Test1", Foo = new Foo { Id = 5, Parent = 3, Name = "Foo1", Bars = new List<int> { 1, 2, 3, 4 } } };
-            var testObject2 = new TestObject { Object = testObject1, Name = "Test2", Foo = new Foo { Id = 6, Parent = 7, Name = "Foo2", Bars = new List<int> { 1, 5, 3, 4 } } };
+            var testObject1 = new TestObject { Name = "Test1", Foo = new Foo { Id = 0, Parent = 3, Name = "Foo1", Bars = new List<int> { 1, 2, 3, 4 } } };
+            var testObject2 = new TestObject { Object = testObject1, Name = "Test2", Foo = new Foo { Id = 6, Parent = 7, Name = "Foo2", EnumValue = TestEnum.Enum2, Bars = new List<int> { 1, 5, 3, 4 } } };
             int id = 1;
             string userId = "";
 

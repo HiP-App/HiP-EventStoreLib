@@ -11,6 +11,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
         public int Parent { get; set; }
 
         public List<int> Bars { get; set; }
+        public TestEnum EnumValue { get; set; }
 
         public override bool Equals(object obj)
         {
@@ -31,5 +32,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Tests
             hashCode = hashCode * -1521134295 + EqualityComparer<List<int>>.Default.GetHashCode(Bars);
             return hashCode;
         }
+    }
+
+    public enum TestEnum
+    {
+        Enum1, Enum2
     }
 }
