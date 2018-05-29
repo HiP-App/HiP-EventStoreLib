@@ -93,8 +93,11 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (resourceType == null)
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
 
-            if (!ResourceType.properties.TryGetValue(resourceType, out var properties))
+            if (!ResourceType.Properties.TryGetValue(typeof(T).Name, out var properties))
+            {
                 properties = typeof(T).GetProperties().Where(p => p.CanRead);
+                ResourceType.Properties[typeof(T).Name] = properties;
+            }
 
             foreach (var prop in properties)
             {
