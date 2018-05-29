@@ -1,10 +1,10 @@
-﻿using System.Collections;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
-using System;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
@@ -93,7 +93,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (resourceType == null)
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
 
-            var properties = typeof(T).GetProperties().Where(p => p.CanRead);
+            if (!ResourceType.properties.TryGetValue(resourceType, out var properties))
+                properties = typeof(T).GetProperties().Where(p => p.CanRead);
+
             foreach (var prop in properties)
             {
                 var oldValue = prop.GetValue(oldObject);
