@@ -2,9 +2,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
@@ -23,8 +20,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     {
         private static readonly ConcurrentDictionary<string, ResourceType> Dictionary = 
             new ConcurrentDictionary<string, ResourceType>();
-
-        public static readonly Dictionary<string, IEnumerable<PropertyInfo>> Properties = new Dictionary<string, IEnumerable<PropertyInfo>>();
 
         /// <summary>
         /// This name is used in two ways:
@@ -90,9 +85,6 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 Type = type,
                 BaseResourceType = baseResourceType
             };
-
-            if (type != null)
-                Properties[name] = type.GetProperties().Where(p => p.CanRead);
 
             Dictionary[name] = resourceType;
             return resourceType;

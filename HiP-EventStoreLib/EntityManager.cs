@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
@@ -13,6 +14,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public static class EntityManager
     {
+        private static readonly Dictionary<string, IEnumerable<PropertyInfo>> _propertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
+
         /// <summary>
         /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
         /// <see cref="PropertyChangedEvent"/>s to the event stream.
@@ -93,10 +96,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (resourceType == null)
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
 
-            if (!ResourceType.Properties.TryGetValue(typeof(T).Name, out var properties))
+            if (!_propertiesDict.TryGetValue(typeof(T).Name, out var properties))
             {
                 properties = typeof(T).GetProperties().Where(p => p.CanRead);
-                ResourceType.Properties[typeof(T).Name] = properties;
+                _propertiesDict[typeof(T).Name] = properties;
             }
 
             foreach (var prop in properties)
