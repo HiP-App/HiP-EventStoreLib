@@ -22,21 +22,22 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
                 {
                     var property = type.GetProperty(splitResults[i]);
                     if (property != null)
-                        type = property.PropertyType;
-                    var nestedObject = property.GetValue(currentObj);
-                    if (nestedObject == null)
                     {
-                        //we need to create a new instance
-                        if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
-                        var newObject = Activator.CreateInstance(type, true);
-                        property.SetValue(currentObj, newObject);
-                        nestedObject = newObject;
+                        type = property.PropertyType;
+                        var nestedObject = property.GetValue(currentObj);
+                        if (nestedObject == null)
+                        {
+                            //we need to create a new instance
+                            if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                            var newObject = Activator.CreateInstance(type, true);
+                            property.SetValue(currentObj, newObject);
+                            nestedObject = newObject;
+                        }
+
+                        currentObj = nestedObject;
+
+                        i++;
                     }
-
-                    currentObj = nestedObject;
-
-
-                    i++;
                 }
                 var finalProperty = type.GetProperty(splitResults[i]);
                 if (finalProperty != null)

@@ -142,9 +142,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                             oldValue = Activator.CreateInstance(type, true);
                         }
 
-                        if (oldValue != null)
+                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
+                        if (methodInfo != null)
                         {
-                            var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
                             var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
                             var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
 
