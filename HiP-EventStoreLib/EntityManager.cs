@@ -14,7 +14,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public static class EntityManager
     {
-        private static readonly Dictionary<string, IEnumerable<PropertyInfo>> _propertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
+        private static readonly Dictionary<string, IEnumerable<PropertyInfo>> PropertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
 
         /// <summary>
         /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
@@ -96,10 +96,10 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
             if (resourceType == null)
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
 
-            if (!_propertiesDict.TryGetValue(typeof(T).Name, out var properties))
+            if (!PropertiesDict.TryGetValue(typeof(T).Name, out var properties))
             {
                 properties = typeof(T).GetProperties().Where(p => p.CanRead);
-                _propertiesDict[typeof(T).Name] = properties;
+                PropertiesDict[typeof(T).Name] = properties;
             }
 
             foreach (var prop in properties)
@@ -140,7 +140,7 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                             oldValue = Activator.CreateInstance(type, true);
                         }
 
-                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
                         var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
                         var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
 
