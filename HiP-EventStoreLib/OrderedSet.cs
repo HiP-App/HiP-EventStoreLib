@@ -58,6 +58,9 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         public bool Remove(T item)
         {
+            if (item == null)
+                return false;
+
             if (!_dictionary.TryGetValue(item, out var node))
                 return false;
 
@@ -70,7 +73,12 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public bool Contains(T item) => _dictionary.ContainsKey(item);
+        public bool Contains(T item) {
+            if (item == null)
+                return false;
+
+            return _dictionary.ContainsKey(item);
+        }
 
         public void CopyTo(T[] array, int arrayIndex) => _linkedList.CopyTo(array, arrayIndex);
     }

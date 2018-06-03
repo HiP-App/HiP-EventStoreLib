@@ -21,7 +21,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing.Events
                 while (i < splitResults.Length - 1)
                 {
                     var property = type.GetProperty(splitResults[i]);
-                    type = property.PropertyType;
+                    if (property != null)
+                        type = property.PropertyType;
                     var nestedObject = property.GetValue(currentObj);
                     if (nestedObject == null)
                     {
