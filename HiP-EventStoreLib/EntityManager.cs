@@ -1,10 +1,11 @@
-﻿using System.Collections;
+﻿using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
+using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
-using PaderbornUniversity.SILab.Hip.EventSourcing.EventStoreLlp;
-using PaderbornUniversity.SILab.Hip.EventSourcing.Events;
-using System;
 
 namespace PaderbornUniversity.SILab.Hip.EventSourcing
 {
@@ -13,6 +14,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     /// </summary>
     public static class EntityManager
     {
+        private static readonly Dictionary<string, IEnumerable<PropertyInfo>> PropertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
+
         /// <summary>
         /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
         /// <see cref="PropertyChangedEvent"/>s to the event stream.
@@ -87,13 +90,20 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
 
         private static IEnumerable<PropertyChangedEvent> CompareEntitiesInternal<T>(T oldObject, T newObject, ResourceType resourceType, int id, string userId, string propertyPath, int recursionDepth, bool entityCreated = false)
         {
+            // ReSharper disable All
             if (oldObject == null || newObject == null)
                 throw new ArgumentNullException("None of the objects to compare can be null");
 
             if (resourceType == null)
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
+            // ReSharper restore All
 
-            var properties = typeof(T).GetProperties().Where(p => p.CanRead);
+            if (!PropertiesDict.TryGetValue(typeof(T).Name, out var properties))
+            {
+                properties = typeof(T).GetProperties().Where(p => p.CanRead);
+                PropertiesDict[typeof(T).Name] = properties;
+            }
+
             foreach (var prop in properties)
             {
                 var oldValue = prop.GetValue(oldObject);
@@ -132,13 +142,16 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                             oldValue = Activator.CreateInstance(type, true);
                         }
 
-                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                        var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
-                        var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
-
-                        foreach (var e in events)
+                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
+                        if (methodInfo != null)
                         {
-                            yield return e;
+                            var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
+                            var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
+
+                            foreach (var e in events)
+                            {
+                                yield return e;
+                            }
                         }
                     }
                 }
