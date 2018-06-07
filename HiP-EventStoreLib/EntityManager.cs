@@ -16,6 +16,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     {
         private static readonly Dictionary<string, IEnumerable<PropertyInfo>> PropertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
 
+        private static readonly object _lockObject = new object();
+
         /// <summary>
         /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
         /// <see cref="PropertyChangedEvent"/>s to the event stream.
@@ -98,70 +100,73 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
             // ReSharper restore All
 
-            if (!PropertiesDict.TryGetValue(typeof(T).Name, out var properties))
+            lock (_lockObject)
             {
-                properties = typeof(T).GetProperties().Where(p => p.CanRead);
-                PropertiesDict[typeof(T).Name] = properties;
-            }
-
-            foreach (var prop in properties)
-            {
-                var oldValue = prop.GetValue(oldObject);
-                var newValue = prop.GetValue(newObject);
-
-                var type = oldValue?.GetType() ?? newValue?.GetType();
-
-                // both values are null
-                if (type == null) continue;
-
-                if (typeof(IEnumerable).IsAssignableFrom(type))
+                if (!PropertiesDict.TryGetValue(typeof(T).Name, out var properties))
                 {
-                    //this also holds for strings
-                    var oldList = ((IEnumerable)oldValue)?.Cast<object>();
-                    var newList = ((IEnumerable)newValue)?.Cast<object>();
-
-                    if (oldList == null || newList == null || !oldList.SequenceEqual(newList))
-                    {
-                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
-                    }
+                    properties = typeof(T).GetProperties().Where(p => p.CanRead);
+                    PropertiesDict[typeof(T).Name] = properties;
                 }
-                else if (prop.CustomAttributes.Any(d => d.AttributeType.Equals(typeof(NestedObjectAttribute))))
+
+                foreach (var prop in properties)
                 {
-                    if (recursionDepth >= 50) throw new InvalidOperationException("The NestedObject graph seems to contain a cycle");
+                    var oldValue = prop.GetValue(oldObject);
+                    var newValue = prop.GetValue(newObject);
 
-                    if (newValue == null)
+                    var type = oldValue?.GetType() ?? newValue?.GetType();
+
+                    // both values are null
+                    if (type == null) continue;
+
+                    if (typeof(IEnumerable).IsAssignableFrom(type))
                     {
-                        //the nested object has been set to null
-                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
-                    }
-                    else
-                    {
-                        if (oldValue == null)
+                        //this also holds for strings
+                        var oldList = ((IEnumerable)oldValue)?.Cast<object>();
+                        var newList = ((IEnumerable)newValue)?.Cast<object>();
+
+                        if (oldList == null || newList == null || !oldList.SequenceEqual(newList))
                         {
-                            if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
-                            oldValue = Activator.CreateInstance(type, true);
+                            yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
                         }
+                    }
+                    else if (prop.CustomAttributes.Any(d => d.AttributeType.Equals(typeof(NestedObjectAttribute))))
+                    {
+                        if (recursionDepth >= 50) throw new InvalidOperationException("The NestedObject graph seems to contain a cycle");
 
-                        var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
-                        if (methodInfo != null)
+                        if (newValue == null)
                         {
-                            var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
-                            var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
-
-                            foreach (var e in events)
+                            //the nested object has been set to null
+                            yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
+                        }
+                        else
+                        {
+                            if (oldValue == null)
                             {
-                                yield return e;
+                                if (!type.HasEmptyConstructor()) throw new InvalidOperationException("The property type where the NestedObjectAttribute is used must have an empty constructor");
+                                oldValue = Activator.CreateInstance(type, true);
+                            }
+
+                            var methodInfo = typeof(EntityManager).GetMethod(nameof(CompareEntitiesInternal), BindingFlags.NonPublic | BindingFlags.Static);
+                            if (methodInfo != null)
+                            {
+                                var genericMethod = methodInfo.MakeGenericMethod(oldValue.GetType());
+                                var events = (IEnumerable<PropertyChangedEvent>)genericMethod.Invoke(null, new[] { oldValue, newValue, resourceType, id, userId, BuildPath(propertyPath, prop.Name), ++recursionDepth, entityCreated });
+
+                                foreach (var e in events)
+                                {
+                                    yield return e;
+                                }
                             }
                         }
                     }
-                }
-                else if (entityCreated && type.IsValueType)
-                {
-                    yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
-                }
-                else if (!Equals(oldValue, newValue))
-                {
-                    yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
+                    else if (entityCreated && type.IsValueType)
+                    {
+                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
+                    }
+                    else if (!Equals(oldValue, newValue))
+                    {
+                        yield return new PropertyChangedEvent(BuildPath(propertyPath, prop.Name), resourceType.Name, id, userId, newValue);
+                    }
                 }
             }
         }
