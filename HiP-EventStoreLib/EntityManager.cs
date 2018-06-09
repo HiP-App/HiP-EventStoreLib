@@ -16,6 +16,8 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
     {
         private static readonly Dictionary<string, IEnumerable<PropertyInfo>> PropertiesDict = new Dictionary<string, IEnumerable<PropertyInfo>>();
 
+        private static readonly object LockObject = new object();
+
         /// <summary>
         /// Creates an entity by appending a <see cref="CreatedEvent"/> and the necessary
         /// <see cref="PropertyChangedEvent"/>s to the event stream.
@@ -98,10 +100,15 @@ namespace PaderbornUniversity.SILab.Hip.EventSourcing
                 throw new ArgumentNullException("A valid ResourceType has to be provided", nameof(resourceType));
             // ReSharper restore All
 
-            if (!PropertiesDict.TryGetValue(typeof(T).Name, out var properties))
+            IEnumerable<PropertyInfo> properties;
+
+            lock (LockObject)
             {
-                properties = typeof(T).GetProperties().Where(p => p.CanRead);
-                PropertiesDict[typeof(T).Name] = properties;
+                if (!PropertiesDict.TryGetValue(typeof(T).Name, out properties))
+                {
+                    properties = typeof(T).GetProperties().Where(p => p.CanRead);
+                    PropertiesDict[typeof(T).Name] = properties;
+                }
             }
 
             foreach (var prop in properties)
